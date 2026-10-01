@@ -32,11 +32,16 @@
 | 模块 | 内容 | 目录 | 状态 |
 |---|---|---|---|
 | **B** | AIGC 文案去 AI 味：清洗 → 垂类检索 → 双路改写 → 质检 → 三路对照 | `demo_b_copywriting/` | ✅ **可运行**（自研 LLM 臂待 LLM 通道） |
+| **C** | 漫剧智能生产流水线：ComfyUI 出图适配 + 审核层 + 指标层 | `demo_c_manju/` | ✅ **三项新增能力可运行**（MP4 成片待 `aigc-comic` 起服务） |
 | **D** | 统一门户 + 指标口径页 + 来源声明 | `portal/` | ✅ **可运行** |
 | **A** | 多模态智能安防 Agent：视觉检测 + 人脸识别 + 语音问答 + MCP 工具编排 | `demo_a_security/` | ⏳ 待做（唯一从零构建；前置 CUDA torch） |
-| **C** | 漫剧智能生产流水线：ComfyUI 出图适配 + 审核层 + 指标层 | `demo_c_manju/` | ⏳ 待做（执行复用 `aigc-comic`） |
 
 完整实施计划见 [`PLAN.md`](./PLAN.md)。
+
+> **Demo C 的三项新增能力**（既有 `aigc-comic` 无这些能力；状态机/断点续跑等属**既有**，不声称自研）：
+> ① `comfy_adapter.py` ComfyUI 出图适配器 —— 实测同 seed 逐字节可复现、`/free` 显存卸载有效；
+> ② `review/` 审核层 —— 规则 6 条 + LLM 通道，分层上报且「无法校验」与「通过」分列；
+> ③ `metrics/` 指标层 —— 人工基线参数化、缓存命中剔除、按配置与冷热分组。
 
 ---
 
@@ -91,7 +96,47 @@ powershell -ExecutionPolicy Bypass -File scripts\start_portal.ps1
 
 ```powershell
 .venv\Scripts\python.exe scripts\selfcheck.py
+
+# 自研语法规则集的精度护栏：10 条合法中文必须 0 命中 + 3 条损伤样本必须命中。
+# 规则集被 Demo B 与 Demo C 共用，一旦误报会同时污染两个 Demo 的结论。
+.venv\Scripts\python.exe -m common.metrics.text_metrics
 ```
+
+> 这条护栏的来历：v1.8 发现原 `R3_dangling_particle`（「语气词 + 标点」）会把
+> 「我们走吧。」「太可了！」这类**正常中文**判为语法异常（Demo C 误报 10 次、Demo B 误报 4 次），
+> 已整条删除。规则集现为 **R1/R2/R4**，Demo B 语法维度数字同步由 0.2 更正为 **0.0**。
+> 完整记录见 `PLAN.md` §8.6。
+
+### 7. Demo C —— 出图 / 审核 / 指标（三项新增能力）
+
+```powershell
+# 7.1 出图前置自检（服务、依赖节点、可用 checkpoint、显存）
+.venv\Scripts\python.exe -m demo_c_manju.comfy_adapter --preflight
+
+# 7.2 真实出图（seed 显式化才可复现；生成前先卸载模型则为冷启动口径）
+.venv\Scripts\python.exe -m demo_c_manju.comfy_adapter `
+    --prompt "1girl, solo, standing on a rooftop, sunset sky, city skyline" `
+    --seed 20261001 --free-before
+# → outputs/demo_c/<时间戳>_seed<N>/{*.png, workflow.json, result.json}
+#   （workflow.json 可独立喂给 ComfyUI 复现同一张图）
+
+# 7.3 内容审核（规则通道零依赖，无 LLM 也能跑）
+.venv\Scripts\python.exe -m demo_c_manju.review --no-llm
+# → outputs/demo_c_review/{REPORT.md, report.json}
+
+# 7.4 效率口径（实测 vs 申报假设；可当场改假设重算）
+.venv\Scripts\python.exe -m demo_c_manju.metrics --per-frame-minutes 4
+# → outputs/demo_c_metrics/{REPORT.md, comparison.csv, report.json}
+```
+
+**Demo C 的三条效率口径硬规则**（由代码强制，不靠人自觉）：
+
+1. **不跨配置求平均** —— 832×1216/28 步 与 512×512/4 步是不同工作负载，平均出来的数字没有意义；
+2. **剔除 ComfyUI 缓存命中** —— 同 prompt + 同 seed 重复提交会命中节点缓存（实测仅 0.49 s，不含推理），计入会让吞吐凭空翻倍；
+3. **实测与申报假设绝不混算** —— 对比表每格标注来源，未实测的阶段留空，不填估算值。
+
+> 结论：**不引用任何整体效率倍数**。只报绝对耗时 —— 稳态单张 14.46 s（n=3，极差 0.07 s）、
+> 冷启动 21.11 s、6 张样片出图 93.4 s。人工基线为申报假设（54 分钟/条，依据逐条列出，可改参重算）。
 
 ### 端口分配
 

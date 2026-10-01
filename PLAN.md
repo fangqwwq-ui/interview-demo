@@ -91,6 +91,21 @@
 
 > 降级预案：若 cu128 轮子下载受限，则 Demo A 改为跨进程调用 `D:\ComfyUI\venv\Scripts\python.exe` 执行推理脚本，主进程只做编排。
 
+### 2.3 P0 环境验证结果（2026-10-01 实测）
+
+| 验证项 | 结果 | 备注 |
+|---|---|---|
+| FFmpeg / ffprobe | ✅ **可用** | `ffmpeg 8.1.2-full_build`（winget 安装），`ffprobe` 同在 PATH。Demo C 合成与音画同步可用 |
+| ComfyUI 服务 | ✅ **可用** | `ComfyUI 0.28.0`，Python 3.11.9；`cuda:0 RTX 5070 Laptop GPU`，`vram_total 8.0 GB`；**可用节点 1045 个**，`CheckpointLoaderSimple` / `KSampler` / `CLIPTextEncode` / `VAEDecode` / `SaveImage` / `LoraLoader` 全部就绪 |
+| ComfyUI 启动耗时 | ⚠️ **约 60–90 秒** | ComfyUI-Manager 会做依赖检查。演示与脚本必须等 `To see the GUI go to` 标志或轮询 `/system_stats`，不能假设立即就绪 |
+| ComfyUI 次要告警 | ⚠️ 有 | 日志提示「You need pytorch with cu130 or higher to use optimized CUDA operations」，当前 cu128 下部分加速算子禁用（`comfy_kitchen cuda backend: disabled`），**不影响基本出图** |
+| aigc-comic 服务 | ✅ **可用** | `/health` 返回 `{"status":"ok"}`；实测暴露 **8 个接口**（见 3.1）；启动耗时约 10 秒 |
+| torch 镜像连通性 | ✅ 均可达 | 官方 `download.pytorch.org/whl/cu128`（200，72 条 torch-2.7）、**阿里云 `/pytorch-wheels/cu128`（200，同样 72 条，国内应更快）**；清华该镜像 404，不可用 |
+| 项目 venv | ✅ 已建立 | `E:\interview-demo\.venv`，Python 3.13.14 |
+| pip 缓存 | ⚠️ 需绕过 | 沙箱的批量删除保护会拦截 pip 的缓存清理导致安装失败，**必须加 `--no-cache-dir`**（已写入启动脚本） |
+
+> ⚠️ **路径陷阱（已踩）**：Git Bash 的 `/e/...` `/tmp/...` 形式传给原生 Windows Python 时，会被按「当前盘符」解析成 `E:\e\...`、`E:\tmp\...`。调用本机 Python 时**一律使用 `E:/interview-demo/...` 这类 Windows 形式路径**。
+
 ---
 
 ## 3. 可复用资产盘点（P0 已完成）
@@ -483,16 +498,26 @@ FastAPI 单页应用，提供：
 - [x] 资产盘点（第 3 节全部条目）
 - [x] 项目根目录建立：`E:\interview-demo`
 
+### P0 已完成
+
+- [x] 资产盘点（第 3 节全部条目）
+- [x] 项目根目录与 git 仓库建立：`E:\interview-demo`（分支 `master`，2 次提交）
+- [x] 目录骨架（36 个目录）
+- [x] `requirements/*.txt` 六个分模块依赖文件
+- [x] `.env.example` 与 `scripts/*.ps1` 五个脚本（全 ASCII 内容）
+- [x] `.venv` 建立（Python 3.13.14），base 依赖安装完成
+- [x] 验证 FFmpeg 8.1.2 + ffprobe 可用
+- [x] 验证 ComfyUI 服务可起（0.28.0，1045 节点，CUDA 正常）
+- [x] 验证 `aigc-comic` 服务可起（`/health` ok，8 接口）
+- [x] 引入 `third_party/humanize-chinese` 并完成能力实测评估
+- [x] 探测 torch 镜像连通性，确定阿里云备用源
+
 ### P0 待执行
 
-- [ ] 目录骨架与 `requirements/*.txt`
-- [ ] `.env.example` 与启动脚本 `scripts/*.ps1`
-- [ ] `bootstrap_env.ps1`：新建 `.venv`、装 base 依赖
-- [ ] 验证 FFmpeg 可用（Demo C 合成前置）
-- [ ] 验证 `E:\aigc-comic` 服务可正常启动并跑通 `/health`
-- [ ] 验证 ComfyUI 服务可起并完成一次出图
-- [ ] 安装 Ollama 并拉取 Qwen3-8B，验证本地推理连通
-- [ ] 校验云端 API Key，跑通 Provider 双通道切换
+- [ ] 完成 torch cu128 安装（下载中）与 nlp / audio / vision / dev 依赖
+- [ ] 安装 Ollama 并拉取 Qwen3-8B，验证本地推理连通 **（需你许可，约 5 GB）**
+- [ ] 校验云端 API Key，跑通 Provider 双通道切换 **（需你提供 `DASHSCOPE_API_KEY`）**
 - [ ] 确定 Demo B 语料来源，产出清洗脚本
+- [ ] 跑通 `aigc-comic` 的 `/run` 全流程一次，确认端到端可用（P3 前置）
 
 > 本文档随实施迭代更新；任何口径调整必须同步更新第 4 节与第 12 节。

@@ -1,0 +1,9 @@
+# 视觉与语音推理（Demo A 专用）
+# IMPORTANT: torch / torchvision 不在此文件。
+# RTX 5070 Laptop 为 Blackwell 架构（sm_120），必须装 cu128 轮子：
+#   pip install torch torchvision --index-url https://download.pytorch.org/whl/cu128
+# 由 scripts/bootstrap_env.ps1 自动处理。
+ultralytics>=8.3
+insightface>=0.7.3
+opencv-python>=4.10
+onnxruntime-gpu>=1.18

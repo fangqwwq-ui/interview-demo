@@ -1,0 +1,3 @@
+# 语音识别（Demo A 语音交互链路）
+faster-whisper>=1.0
+soundfile>=0.12

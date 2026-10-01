@@ -1,0 +1,6 @@
+# 向量检索与中文处理（Demo B / Demo A 共用）
+# 注意：sentence-transformers 会引入 torch，请先按 scripts/bootstrap_env.ps1 用 cu128 源装好 torch
+faiss-cpu>=1.8
+sentence-transformers>=3.0
+jieba>=0.42
+scikit-learn>=1.4

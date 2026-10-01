@@ -1,0 +1,5 @@
+# 用于在项目 venv 内托管既有执行服务 E:\aigc-comic（不修改其代码）
+# 与 E:\aigc-comic\requirements.txt 对齐
+edge-tts>=6.1.0
+Pillow>=10.0.0
+requests>=2.31.0

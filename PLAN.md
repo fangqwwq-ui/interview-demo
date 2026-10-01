@@ -14,6 +14,7 @@
 | v1.2 | **P0 资产盘点完成，结论重大**：发现 `E:\aigc-comic` 已是完成度 M1/M2 的漫剧全自动生产线（已产出 `final.mp4`、FastAPI 5 接口、pydantic 契约、音画同步），即 Demo C 的主体。① 项目定位由「从零构建」改为「已有资产收敛 + 补强」；② Demo C 方案全面重写，改为「增强既有服务 + 编排层分离」；③ 阶段工作量大面积下调，**Demo A 成为唯一需从零构建的模块** |
 | v1.3 | **开源内核实测完成，Demo B 架构修正**：实测 `humanize-chinese` 后确认——其**检测能力可用**（95/100 打分 + 8 类明细 + 困惑度/突发度/段落熵CV），但**规则改写会破坏中文语法**（实测产出「之于于」「也的环节地位」等病句，且仅降 33 分仍属 HIGH）。① Demo B 改为「内核仅作检测器，改写走自研 LLM + RAG 链路」；② 自研质检层去掉困惑度/突发度（内核已提供，不得重复声称）；③ 新增 v1.3 的第 6 节修订 |
 | v1.4 | **既有服务实测校正，Demo C 新增量收敛**：实起 `aigc-comic` 服务并读取 OpenAPI，确认其暴露 **8 个接口**（比 README 所述多出 `/run` `/tasks` `/tasks/{task_id}`），且 `/run` 的模型注释明确写「复用 pipeline 状态机 + 断点续跑」。① Demo C 的「状态机 / 断点续跑 / 重试」由原计划的**新增项**改判为**既有能力**，不得声称自研；② 第 8.2 节重写为「新增 vs 既有」边界表；③ Demo C 真实新增量收敛为三项：ComfyUI 出图适配器、审核层、指标层 |
+| v1.5 | **网络带宽成为硬约束，torch 改分级方案**：实测官方源 ~170 KB/s、阿里云 ~340 KB/s，**换源无法解决**（瓶颈在本地出口）。① 新增第 2.4 节记录带宽约束；② torch 改分级：P1/Demo B 用 **CPU 版**（250 MB，快速解封），P2/Demo A 用 **CUDA 版**（2.6 GB，后台下载）；③ torch 版本必须锁定，否则会解析到 2.11.0 导致下载失控；④ 阶段排序据此调整为「先做不依赖 GPU 的 Demo B」 |
 
 ---
 
@@ -81,15 +82,47 @@
 | ComfyUI（只读调用） | `D:\ComfyUI` → `http://127.0.0.1:8188` |
 | 漫剧执行服务（复用） | `E:\aigc-comic` → `http://127.0.0.1:8000` |
 
-### 2.2 环境隔离策略
+### 2.2 环境隔离策略与 torch 分级方案
 
-**Demo C 不导入 torch**——它通过 HTTP 调 ComfyUI 与 `aigc-comic` 服务，因此不需要为 C 在本项目 venv 内装 CUDA 版 torch。但 Demo A 的视觉与语音必须在本进程内跑 torch。结论：
+**Demo C 不导入 torch**——它通过 HTTP 调 ComfyUI 与 `aigc-comic` 服务，因此不需要为 C 在本项目 venv 内装 CUDA 版 torch。
 
-- 新建独立 venv：`E:\interview-demo\.venv`
-- torch 单独安装：`--index-url https://download.pytorch.org/whl/cu128`
-- Demo C 仅依赖 `requests` / `httpx`
+**torch 采用分级方案**（因实测下载带宽受限，见 2.4）：
 
-> 降级预案：若 cu128 轮子下载受限，则 Demo A 改为跨进程调用 `D:\ComfyUI\venv\Scripts\python.exe` 执行推理脚本，主进程只做编排。
+| 用途 | 版本 | 说明 |
+|---|---|---|
+| 阶段 P1 / Demo B | **CPU 版 torch** | 向量化（bge-small-zh）与评测在 CPU 上完全够用，约 250 MB，可快速解封 |
+| 阶段 P2 / Demo A | **CUDA 版 torch（cu128）** | 视觉/语音实时推理需要 GPU；约 2.6 GB，安排后台下载 |
+| ComfyUI 出图 | **无需本项目 torch** | 走 HTTP；ComfyUI 自带 `D:\ComfyUI\venv`（torch 2.7.0+cu128） |
+
+- 新建独立 venv：`E:\interview-demo\.venv`（Python 3.13.14）
+- torch 版本**必须锁定**，否则 `--index-url .../cu128` 会解析到最新版（实测拿到 2.11.0+cu128），下载量与耗时失控
+- 可用 wheel 来源：
+  - 官方 `https://download.pytorch.org/whl/cu128`（可用，实测约 170 KB/s）
+  - **阿里云 `https://mirrors.aliyun.com/pytorch-wheels/cu128/`**（可用，实测约 340 KB/s；含 cp39–cp313 win 轮子）
+  - 清华同类镜像 404，不可用
+- 锁定版本的安装命令：
+  ```powershell
+  pip install --no-cache-dir "torch==2.7.0+cu128" "torchvision==0.22.1+cu128" `
+      -f https://mirrors.aliyun.com/pytorch-wheels/cu128/ `
+      -i https://mirrors.aliyun.com/pypi/simple/
+  ```
+
+> 降级预案（已具备条件）：若 GPU 版 torch 始终受限，Demo A 改为**跨进程调用 `D:\ComfyUI\venv\Scripts\python.exe`** 执行视觉推理，主进程只做编排。ComfyUI venv 内已有可用的 torch 2.7.0+cu128。
+
+### 2.4 网络带宽约束（实测，影响排期）
+
+| 来源 | 实测速率 | 结论 |
+|---|---|---|
+| 官方 pytorch cu128 | ~170 KB/s | 2.6 GB 需 ≈ 2 小时以上 |
+| 阿里云 pytorch-wheels | ~340 KB/s | 2.6 GB 需 ≈ 2 小时 |
+| 阿里云 PyPI 镜像（普通包） | 快 | base 依赖秒装 |
+
+**换源无法解决**——瓶颈在本地出口带宽或限速，不在镜像。因此：
+
+1. 大体积依赖（CUDA torch、onnxruntime-gpu）必须**后台下载**，不阻塞前台开发
+2. 阶段排序据此调整：先做**不依赖 GPU 的 Demo B**，GPU 相关（Demo A）后置
+3. 演示当天须确认 ComfyUI 与模型**已就位**，不依赖临时下载
+
 
 ### 2.3 P0 环境验证结果（2026-10-01 实测）
 

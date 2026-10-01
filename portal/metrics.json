@@ -49,7 +49,7 @@
       "script": "common/metrics/text_metrics.py::semantic_fidelity",
       "instrument": "bge-small-zh-v1.5（无 torch 环境下降级为 hashing-ngram 兜底）",
       "status": "measured",
-      "measured": "未测出可用值 —— 当前环境缺 sentence-transformers，向量化走零依赖兜底，余弦不具语义意义，已排除在判定之外",
+      "measured": "规则改写（第三方 humanize-chinese）：均 0.9831（n=20）",
       "gap_note": "兜底向量化后端不具语义能力，指标会失真 —— 口径页必须标出实际使用的后端。",
       "provenance": "self-built",
       "tags": [
@@ -85,7 +85,7 @@
       "script": "demo_b_copywriting/evaluate.py",
       "instrument": "FAISS IndexFlatIP（不可用时降级 numpy 暴力检索）",
       "status": "measured",
-      "measured": "中位数 0.01 ms，P95 0.039 ms（60 次采样，后端 numpy-bruteforce，语料 20 条查询 / 35 篇文档）",
+      "measured": "中位数 0.069 ms，P95 0.135 ms（60 次采样，后端 faiss-flat-ip，语料 20 条查询 / 35 篇文档）",
       "gap_note": "仅在 Demo 规模（数十~数千条）下测量，且**不含向量化耗时**（只测向量检索本身）。十万级以上需换 IVF/HNSW 并重新标定召回率。",
       "provenance": "self-built",
       "tags": [

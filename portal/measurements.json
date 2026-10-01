@@ -5,27 +5,27 @@
     "b_detection_score_drop": {
       "measured": "规则改写（第三方 humanize-chinese）：检测分均值 2.2 → 1，均降 1.2 分（中位数 0.0），n=20",
       "gap_note": "简历值是「平台检测通过率」，本 Demo 用开源检测器的分数代理，两者不是同一把尺子。**更重要的限制**：该检测器的灵敏度分语域 —— 20 条中 14 条内核得 0 分，对「评测腔 / 种草腔」覆盖不足。因此本项必须与 b_ai_tell_residual 并报，不得单独引用。详见 third_party/README.md。",
-      "measured_at": "2026-10-01T22:42:22+08:00"
+      "measured_at": "2026-10-01T23:09:40+08:00"
     },
     "b_ai_tell_residual": {
       "measured": "规则改写（第三方 humanize-chinese）：均命中 2.15 → 1.7 处，均减少 0.45 处，合计减少 9 处（n=20）",
       "gap_note": "本指标存在的理由是：第三方内核检测器在「评测腔 / 种草腔」上灵敏度不足（20 条评测集有 14 条得 0 分），单一仪器会漏测。词典只覆盖可逐条指认的表达，不等于完整的「AI 味」定义。",
-      "measured_at": "2026-10-01T22:42:22+08:00"
+      "measured_at": "2026-10-01T23:09:40+08:00"
     },
     "b_semantic_fidelity": {
-      "measured": "未测出可用值 —— 当前环境缺 sentence-transformers，向量化走零依赖兜底，余弦不具语义意义，已排除在判定之外",
+      "measured": "规则改写（第三方 humanize-chinese）：均 0.9831（n=20）",
       "gap_note": "兜底向量化后端不具语义能力，指标会失真 —— 口径页必须标出实际使用的后端。",
-      "measured_at": "2026-10-01T22:42:22+08:00"
+      "measured_at": "2026-10-01T23:09:40+08:00"
     },
     "b_grammar_anomalies": {
       "measured": "规则改写（第三方 humanize-chinese）：20 条中有 0 条出现新增语法异常；均命中 0 → 0",
       "gap_note": "规则集只覆盖可机械判定的异常，不等于完整语法检查。用途是暴露「规则改写会破坏语法」这一实测事实。⚠️ 原规则集含 R3「语气词 + 标点」，实测在正常中文上误报（「我们走吧。」「太可了！」被判异常），已整条删除。规则集现为 R1/R2/R4，历史口径已按此重算。自检命令：python -m common.metrics.text_metrics",
-      "measured_at": "2026-10-01T22:42:23+08:00"
+      "measured_at": "2026-10-01T23:09:40+08:00"
     },
     "b_retrieval_latency": {
-      "measured": "中位数 0.01 ms，P95 0.039 ms（60 次采样，后端 numpy-bruteforce，语料 20 条查询 / 35 篇文档）",
+      "measured": "中位数 0.069 ms，P95 0.135 ms（60 次采样，后端 faiss-flat-ip，语料 20 条查询 / 35 篇文档）",
       "gap_note": "仅在 Demo 规模（数十~数千条）下测量，且**不含向量化耗时**（只测向量检索本身）。十万级以上需换 IVF/HNSW 并重新标定召回率。",
-      "measured_at": "2026-10-01T22:42:23+08:00"
+      "measured_at": "2026-10-01T23:09:40+08:00"
     },
     "c_review_hit_rate": {
       "measured": "规则通道 · 注入层 8/9 (88.9%)；真实层 0/3 (0.0%)；误报对照 0/1；LLM 通道未执行（无 Key / 无本地模型），未估算",

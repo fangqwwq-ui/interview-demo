@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-10-01T22:42:22+08:00",
+  "generated_at": "2026-10-01T23:09:40+08:00",
   "generated_by": "demo_b_copywriting/evaluate.py",
   "eval_set": {
     "file": "demo_b_copywriting\\data\\clean\\ai_style_eval.jsonl",
@@ -26,22 +26,23 @@
     "index_dir": "E:\\interview-demo\\data\\index\\demo_b",
     "doc_count": 35,
     "corpus_digest": "a43ddadd379d1fbc",
-    "built_at": "2026-10-01T20:58:05+08:00",
+    "built_at": "2026-10-01T23:07:39+08:00",
     "encoder": {
-      "backend": "hashing-ngram",
-      "model": "charngram-dim512",
+      "backend": "sentence-transformers",
+      "model": "BAAI/bge-small-zh-v1.5",
       "dim": 512,
-      "is_fallback": true
+      "is_fallback": false
     },
     "store": {
-      "backend": "numpy-bruteforce",
+      "backend": "faiss-flat-ip",
       "dim": 512,
       "size": 35,
       "metric": "cosine",
-      "is_fallback": true,
-      "note": "O(N) 暴力检索，仅适用于 Demo 规模"
+      "is_fallback": false,
+      "index": "IndexFlatIP",
+      "exact": true
     },
-    "built_with_encoder": "hashing-ngram"
+    "built_with_encoder": "sentence-transformers"
   },
   "prompt_version": null,
   "llm": {
@@ -84,8 +85,8 @@
       "grammar_before_mean": 0,
       "grammar_after_mean": 0,
       "grammar_new_anomaly_records": 0,
-      "fidelity_mean": null,
-      "fidelity_reliable": false,
+      "fidelity_mean": 1.0,
+      "fidelity_reliable": true,
       "length_ratio_mean": 1.0,
       "verdicts": {
         "pass": 20
@@ -109,14 +110,14 @@
       "grammar_before_mean": 0,
       "grammar_after_mean": 0,
       "grammar_new_anomaly_records": 0,
-      "fidelity_mean": null,
-      "fidelity_reliable": false,
+      "fidelity_mean": 0.9831,
+      "fidelity_reliable": true,
       "length_ratio_mean": 1.0189,
       "verdicts": {
         "review": 16,
         "pass": 4
       },
-      "elapsed_s_mean": 0.4183,
+      "elapsed_s_mean": 0.4229,
       "retrieval_ms_mean": 0.0
     }
   },
@@ -162,12 +163,12 @@
     "queries": 20,
     "repeat": 3,
     "samples": 60,
-    "median_ms": 0.01,
-    "mean_ms": 0.014,
-    "p95_ms": 0.039,
-    "min_ms": 0.008,
-    "max_ms": 0.102,
-    "store_backend": "numpy-bruteforce"
+    "median_ms": 0.069,
+    "mean_ms": 0.076,
+    "p95_ms": 0.135,
+    "min_ms": 0.05,
+    "max_ms": 0.155,
+    "store_backend": "faiss-flat-ip"
   },
   "instruments": {
     "detector": {

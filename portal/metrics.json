@@ -47,7 +47,7 @@
       "formula": "cos(encode(原文), encode(改写后))，向量 L2 归一化后取内积",
       "dataset": "同上评测集",
       "script": "common/metrics/text_metrics.py::semantic_fidelity",
-      "instrument": "bge-small-zh-v1.5（无 torch 环境下降级为 hashing-ngram 兜底）",
+      "instrument": "sentence-transformers + BAAI/bge-small-zh-v1.5（本地目录加载，dim=512）",
       "status": "measured",
       "measured": "规则改写（第三方 humanize-chinese）：均 0.9831（n=20）",
       "gap_note": "兜底向量化后端不具语义能力，指标会失真 —— 口径页必须标出实际使用的后端。",
@@ -182,6 +182,24 @@
         "demo-c",
         "quality",
         "instrument"
+      ]
+    },
+    {
+      "key": "c_prompt_adaptation_coverage",
+      "name": "中文提示词适配覆盖率",
+      "resume_claim": "（支撑「漫剧流水线可用」的前置条件）",
+      "definition": "中文提示词中**被成功转为英文标签的中文字符**占比（按字符数，不按词条数）",
+      "formula": "1 − 残留中文字符数 / 原文中文字符总数",
+      "dataset": "既有服务 aigc-comic 的真实分镜提示词（由其 lib/image.py::build_prompt 生成）",
+      "script": "demo_c_manju/a1111_shim.py::adapt_prompt",
+      "instrument": "自研词表（99 条）+ 数值年龄正则 + 残留中文剥离与计量",
+      "status": "measured",
+      "measured": "既有服务真实分镜提示词，5 条（词表 100 条）：中文覆盖率均 90.7%（最低 81.0%，最高 97.1%）；平均命中 10.4 个词条",
+      "gap_note": "为什么按**字符数**而不按词条数：一个未覆盖的短词和一句未覆盖的长句权重不同，按词条计数会把长句的低覆盖掩盖掉。⚠️ 本指标的边界：它只度量「中文是否被转走」，**不度量转得对不对**；它也不度量出图质量 —— 本机无图文对齐模型，不构造语义评分。另注：残留中文默认被剥离（dropped_terms 逐条可查）。**剥离的收益未经证实**：scripts/ab_prompt_adaptation.py 的单变量对照（n=1，同 seed）显示，扩词表使出图从「偏离分镜」变为「贴合分镜」（差异显著），而在此基础上再剥离残留，肉眼**无可辨识差异**。即真正起作用的是词表覆盖；剥离只为覆盖率可量化、少送噪声，不声称提升画质。",
+      "provenance": "self-built",
+      "tags": [
+        "demo-c",
+        "quality"
       ]
     },
     {

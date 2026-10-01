@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-10-01T22:08:53+08:00",
+  "generated_at": "2026-10-01T22:15:28+08:00",
   "generated_by": "demo_b_copywriting/evaluate.py",
   "eval_set": {
     "file": "demo_b_copywriting\\data\\clean\\ai_style_eval.jsonl",
@@ -116,7 +116,7 @@
         "review": 16,
         "pass": 4
       },
-      "elapsed_s_mean": 0.4345,
+      "elapsed_s_mean": 0.428,
       "retrieval_ms_mean": 0.0
     }
   },
@@ -162,11 +162,11 @@
     "queries": 20,
     "repeat": 3,
     "samples": 60,
-    "median_ms": 0.01,
-    "mean_ms": 0.014,
-    "p95_ms": 0.035,
-    "min_ms": 0.009,
-    "max_ms": 0.109,
+    "median_ms": 0.011,
+    "mean_ms": 0.013,
+    "p95_ms": 0.021,
+    "min_ms": 0.01,
+    "max_ms": 0.102,
     "store_backend": "numpy-bruteforce"
   },
   "instruments": {

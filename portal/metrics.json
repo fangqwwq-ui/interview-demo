@@ -1,6 +1,6 @@
 {
   "generated_by": "common/metrics/registry.py",
-  "note": "本文件由代码生成，是门户指标口径页的数据源。任何口径调整必须同时更新 PLAN.md 第 4 节与第 12 节。",
+  "note": "本文件由代码生成，是门户指标口径页的数据源。任何口径调整必须同时更新 PLAN.md 第 4 节与第 12 节。实测值持久化在 portal/measurements.json。",
   "metrics": [
     {
       "key": "b_detection_score_drop",
@@ -85,7 +85,7 @@
       "script": "demo_b_copywriting/evaluate.py",
       "instrument": "FAISS IndexFlatIP（不可用时降级 numpy 暴力检索）",
       "status": "measured",
-      "measured": "中位数 0.01 ms，P95 0.035 ms（60 次采样，后端 numpy-bruteforce，语料 20 条查询 / 35 篇文档）",
+      "measured": "中位数 0.011 ms，P95 0.021 ms（60 次采样，后端 numpy-bruteforce，语料 20 条查询 / 35 篇文档）",
       "gap_note": "仅在 Demo 规模（数十~数千条）下测量，且**不含向量化耗时**（只测向量检索本身）。十万级以上需换 IVF/HNSW 并重新标定召回率。",
       "provenance": "self-built",
       "tags": [

@@ -205,14 +205,64 @@ METRICS: List[MetricEntry] = [
 
 # ============================================================ 导出
 
+# ⚠️ 实测值必须落在**独立文件**里，不能只存在 METRICS 的内存对象中。
+# 原因：metrics.json 会被多个进程导出（evaluate.py 写入实测值，selfcheck.py 也会重新导出）。
+# 若实测值只存在于内存，后一个进程导出时会把 status 重新写成 pending，
+# 把刚测出来的数字**静默覆盖掉**。这在演示现场就是「数字刚才还在，一刷新没了」。
+# 因此：测量结果持久化到 measurements.json，export_json() 每次都从它合并回来。
+MEASUREMENTS_FILE = config.paths.root / "portal" / "measurements.json"
+
+
+def load_measurements(path: Optional[Path] = None) -> dict:
+    target = path or MEASUREMENTS_FILE
+    if not target.exists():
+        return {}
+    try:
+        return json.loads(target.read_text(encoding="utf-8")).get("measurements", {})
+    except json.JSONDecodeError:
+        return {}
+
+
+def save_measurements(payload: dict, path: Optional[Path] = None) -> Path:
+    target = path or MEASUREMENTS_FILE
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_text(
+        json.dumps(
+            {
+                "generated_by": "common/metrics/registry.py::set_measured",
+                "note": "实测值的唯一持久化位置。export_json() 会把它合并进 metrics.json。",
+                "measurements": payload,
+            },
+            ensure_ascii=False,
+            indent=2,
+        ),
+        encoding="utf-8",
+    )
+    return target
+
+
 def export_json(path: Optional[Path] = None) -> Path:
     target = path or (config.paths.root / "portal" / "metrics.json")
     target.parent.mkdir(parents=True, exist_ok=True)
+
+    # 合并已持久化的实测值，避免被重新导出冲掉
+    for key, rec in load_measurements().items():
+        try:
+            entry = by_key(key)
+        except KeyError:
+            continue
+        if rec.get("measured"):
+            entry.status = "measured"
+            entry.measured = rec["measured"]
+        if rec.get("gap_note"):
+            entry.gap_note = rec["gap_note"]
+
     payload = {
         "generated_by": "common/metrics/registry.py",
         "note": (
             "本文件由代码生成，是门户指标口径页的数据源。"
             "任何口径调整必须同时更新 PLAN.md 第 4 节与第 12 节。"
+            "实测值持久化在 portal/measurements.json。"
         ),
         "metrics": [m.as_dict() for m in METRICS],
     }
@@ -228,16 +278,27 @@ def by_key(key: str) -> MetricEntry:
 
 
 def set_measured(key: str, value: str, *, gap_note: str | None = None) -> MetricEntry:
-    """回填实测值。
+    """回填实测值，并**持久化**到 portal/measurements.json。
 
     设计意图：禁止在文档里手写数字，只允许由评测脚本调用本函数回填。
-    这样「文档里的数字」永远能追溯到「哪次评测写进去的」。
+    这样「文档里的数字」永远能追溯到「哪次评测写进去的」，且不会被
+    其他进程的重新导出覆盖。
     """
     entry = by_key(key)
     entry.status = "measured"
     entry.measured = value
     if gap_note is not None:
         entry.gap_note = gap_note
+
+    from datetime import datetime, timezone  # noqa: PLC0415
+
+    payload = load_measurements()
+    payload[key] = {
+        "measured": value,
+        "gap_note": entry.gap_note,
+        "measured_at": datetime.now(timezone.utc).astimezone().isoformat(timespec="seconds"),
+    }
+    save_measurements(payload)
     return entry
 
 

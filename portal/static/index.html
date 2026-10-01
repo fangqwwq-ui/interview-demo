@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>简历项目 Demo 复现 · 门户</title>
+<link rel="stylesheet" href="/static/base.css" />
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <h1>简历项目 Demo 复现 <span class="ver">独立复现 / 技术验证版</span></h1>
+    <div class="sub">三个 Demo 的入口 · 指标口径 · 组件来源声明　—　数据全部由代码生成，非手写文档</div>
+    <nav class="tabs">
+      <a class="on" href="/">概览与入口</a>
+      <a href="/claims">简历 11 条主张 · 指标口径</a>
+      <a href="/components">组件来源声明</a>
+      <a href="/docs" target="_blank" rel="noopener">接口文档 (OpenAPI)</a>
+    </nav>
+  </header>
+
+  <div class="decl">
+    <b>口径声明</b>：本门户是<b>技术方案的独立复现</b>，用于验证流程与指标口径是否成立，
+    <b>不代表任何生产系统的线上数据</b>。简历中「服务 3 家工业园区 / 2 家 MCN 采购 / 可用性 99.8%」
+    等属于运营事实，本仓库无法证明，已在口径页逐条标注。每一个数字都能点开到计算脚本。
+  </div>
+
+  <div class="grid g4" id="stats"><div class="spin">加载中…</div></div>
+
+  <h2>三个 Demo</h2>
+  <div class="grid g3" id="demos"><div class="spin">加载中…</div></div>
+
+  <h2>最近一次评测（Demo B · 三路对照）</h2>
+  <div id="eval"><div class="spin">加载中…</div></div>
+
+  <div class="foot">
+    门户由 <span class="mono">portal/app.py</span> 提供，数据源：
+    <span class="mono">portal/metrics.json</span>（指标口径）、
+    <span class="mono">portal/claims.json</span>（主张覆盖）、
+    <span class="mono">portal/components.json</span>（来源声明）。
+    <span class="mono">POST /api/refresh</span> 可现场重新生成。
+  </div>
+</div>
+
+<script>
+const $ = (s) => document.querySelector(s);
+const esc = (s) => String(s == null ? "" : s);
+
+// 只把 <b> / **粗体** 这类极简标记渲染出来，其余一律转义 —— 避免把 JSON 里的内容当 HTML 执行
+function rich(text){
+  const safe = esc(text)
+    .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+  return safe
+    .replace(/&lt;b&gt;/g,"<b>").replace(/&lt;\/b&gt;/g,"</b>")
+    .replace(/\*\*(.+?)\*\*/g,"<b>$1</b>")
+    .replace(/`(.+?)`/g,"<code>$1</code>");
+}
+function el(tag, cls, html){
+  const d = document.createElement(tag);
+  if(cls) d.className = cls;
+  if(html != null) d.innerHTML = html;
+  return d;
+}
+function pill(text, kind){
+  return el("span", "pill " + (kind||""), esc(text));
+}
+function kv(k, v){
+  const d = el("div","kv");
+  d.append(el("span","k", esc(k)), el("span","", rich(v)));
+  return d;
+}
+
+async function load(){
+  let o;
+  try{
+    const r = await fetch("/api/overview");
+    if(!r.ok) throw new Error("HTTP " + r.status);
+    o = await r.json();
+  }catch(e){
+    $("#stats").replaceChildren(el("div","errbox","门户数据加载失败：" + esc(e.message)));
+    return;
+  }
+
+  // ---- 概览
+  const ms = o.metrics, cl = o.claims;
+  const measured = ms.by_status.measured || 0;
+  const pending = ms.by_status.pending || 0;
+  const notrep = ms.by_status.not_reproducible || 0;
+  const st = el("div","grid g4");
+  st.className = "grid g4";
+  st.append(
+    stat(cl.total, "简历主张（逐条覆盖）"),
+    stat(ms.total, "量化指标总数"),
+    stat(measured, "已实测（可当场复算）"),
+    stat(pending + notrep, "待实测 / 不可复现")
+  );
+  $("#stats").replaceChildren(st);
+
+  // ---- Demo 卡片
+  const host = $("#demos"); host.replaceChildren();
+  for(const d of o.demos){
+    const card = el("div", "card" + (d.ready ? "" : " dim"));
+    const hd = el("div","hd");
+    hd.append(el("span","badge", esc(d.id)), el("h3","", esc(d.name)));
+    hd.append(pill(d.ready ? "已就绪" : "未就绪", d.ready ? "ok" : "warn"));
+    if(d.url){
+      const a = el("a","btn primary","打开界面");
+      a.href = d.url; a.target = "_blank"; a.rel = "noopener";
+      hd.append(a);
+    }
+    card.append(hd);
+    card.append(el("div","sub", esc(d.desc)));
+
+    const inc = el("div"); inc.append(el("div","kv", '<span class="k">本次新增</span>'));
+    const ul1 = el("ul","tight");
+    (d.increment||[]).forEach(x => ul1.append(el("li","", rich(x))));
+    inc.append(ul1); card.append(inc);
+
+    const re = el("div"); re.append(el("div","kv", '<span class="k">复用 / 引用</span>'));
+    const ul2 = el("ul","tight");
+    (d.reuse||[]).forEach(x => ul2.append(el("li","", rich(x))));
+    re.append(ul2); card.append(re);
+
+    card.append(el("div","note", rich(d.status_note)));
+
+    if(d.url){
+      const bar = el("div"); bar.style.marginTop = "10px";
+      const a = el("a", "btn primary", "打开 Demo B 界面");
+      a.href = d.url; a.target = "_blank"; a.rel = "noopener";
+      bar.append(a); card.append(bar);
+    }
+    if(d.launch){
+      const det = el("details");
+      det.append(el("summary","","启动命令"));
+      const inner = el("div","inner");
+      inner.append(el("pre","", esc(d.launch)));
+      det.append(inner); card.append(det);
+    }
+    host.append(card);
+  }
+
+  // ---- 最近一次评测
+  const ev = $("#eval");
+  if(!o.latest_eval){ ev.replaceChildren(el("div","note","尚未跑过批量评测")); return; }
+  const le = o.latest_eval;
+  ev.replaceChildren();
+
+  const meta = el("div","sub");
+  meta.innerHTML = `生成时间 <span class="mono">${esc(le.generated_at)}</span>　样本 ` +
+    `<span class="mono">${esc(le.eval_set ? le.eval_set.n : "?")}</span> 条　垂类 ` +
+    `<span class="mono">${esc((le.eval_set&&le.eval_set.verticals||[]).join(" / "))}</span>`;
+  ev.append(meta);
+
+  const t = el("table");
+  t.innerHTML = "<thead><tr><th>臂</th><th>样本</th><th>检测分(前→后)</th><th>均降</th>" +
+    "<th>AI味残留(前→后)</th><th>判定 pass/review/fail</th></tr></thead>";
+  const tb = el("tbody");
+  for(const k of ["original","kernel","llm"]){
+    const a = le.by_arm[k]; if(!a) continue;
+    const v = a.verdicts || {};
+    const tr = el("tr");
+    tr.innerHTML =
+      `<td>${esc(a.label)}</td><td class="num">${esc(a.n_ok)}</td>` +
+      `<td class="num">${esc(a.detection_before_mean)} → ${esc(a.detection_after_mean)}</td>` +
+      `<td class="num">${esc(a.score_drop_mean)}</td>` +
+      `<td class="num">${esc(a.tells_before_mean)} → ${esc(a.tells_after_mean)}</td>` +
+      `<td class="num">${v.pass||0} / ${v.review||0} / ${v.fail||0}</td>`;
+    tb.append(tr);
+  }
+  t.append(tb); ev.append(t);
+
+  if(le.by_register){
+    ev.append(el("h3","",'仪器灵敏度（按语域）'));
+    const t2 = el("table");
+    t2.innerHTML = "<thead><tr><th>语域</th><th>样本</th><th>内核得0分</th><th>内核均分</th>" +
+      "<th>自研词典均命中</th><th>自研得0分</th></tr></thead>";
+    const tb2 = el("tbody");
+    for(const [reg, s] of Object.entries(le.by_register)){
+      const tr = el("tr");
+      tr.innerHTML = `<td>${esc(reg)}</td><td class="num">${esc(s.n)}</td>` +
+        `<td class="num">${esc(s.kernel_score_zero)}</td><td class="num">${esc(s.kernel_score_mean)}</td>` +
+        `<td class="num">${esc(s.tells_mean)}</td><td class="num">${esc(s.tells_zero)}</td>`;
+      tb2.append(tr);
+    }
+    t2.append(tb2); ev.append(t2);
+    ev.append(el("div","warnbox",
+      "内核检测器得 0 分 <b>不等于</b>文本没有 AI 味 —— 它是仪器未检出。" +
+      "这正是本 Demo 采用双仪器并报、并按语域分组的原因。详见" +
+      " <span class='mono'>third_party/README.md</span>。"));
+  }
+}
+
+function stat(n, label){
+  const d = el("div","stat");
+  d.append(el("div","n", esc(n)), el("div","l", esc(label)));
+  return d;
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  load();
+  const btn = el("button","btn","重新生成口径数据");
+  btn.style.marginTop = "14px";
+  btn.onclick = async () => {
+    btn.disabled = true; btn.textContent = "生成中…";
+    try{
+      const r = await fetch("/api/refresh", {method:"POST"});
+      const j = await r.json();
+      btn.textContent = r.ok ? "已重新生成 ✓" : "失败：" + (j.detail||r.status);
+      await load();
+    }catch(e){ btn.textContent = "失败：" + e.message; }
+    setTimeout(()=>{ btn.disabled=false; btn.textContent="重新生成口径数据"; }, 2200);
+  };
+  document.querySelector(".foot").before(btn);
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>简历 11 条主张 · 指标口径</title>
+<link rel="stylesheet" href="/static/base.css" />
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <h1>简历 11 条主张 · 指标口径 <span class="ver">逐条覆盖，无遗漏</span></h1>
+    <div class="sub">面试官追问「这个数字怎么算的」时，这一页就是答案：定义 / 公式 / 数据集 / 脚本 / 实测值 / 与简历值的差异。</div>
+    <nav class="tabs">
+      <a href="/">概览与入口</a>
+      <a class="on" href="/claims">简历 11 条主张 · 指标口径</a>
+      <a href="/components">组件来源声明</a>
+      <a href="/docs" target="_blank" rel="noopener">接口文档 (OpenAPI)</a>
+    </nav>
+  </header>
+
+  <div class="decl">
+    <b>阅读方式</b>：先看「可复现性」——只有<b>可演示（高置信）</b>才允许在讲稿里当作强证据。
+    「可演示（口径代理）」表示能量化，但用的尺子与简历不同，数值<b>不可直接对比</b>。
+    「不可复现」项已如实标注，<b>不得用 Demo 画面替代原始材料</b>。
+  </div>
+
+  <div id="coverage"><div class="spin">加载中…</div></div>
+
+  <h2>一、简历主张逐条对照</h2>
+  <div id="claims"><div class="spin">加载中…</div></div>
+
+  <h2>二、量化指标口径表</h2>
+  <div class="sub">每一项都列出计算公式、仪器、数据集、脚本路径与实测值。点「查看脚本」直接读源码。</div>
+  <div id="metrics"><div class="spin">加载中…</div></div>
+
+  <div class="foot">
+    数据源 <span class="mono">portal/claims.json</span> + <span class="mono">portal/metrics.json</span>，
+    由 <span class="mono">common/metrics/claims.py</span> 与
+    <span class="mono">common/metrics/registry.py</span> 生成。
+    实测值持久化在 <span class="mono">portal/measurements.json</span>（由评测脚本回填，不允许手写）。
+  </div>
+</div>
+
+<div id="drawer" style="display:none;position:fixed;inset:0;background:rgba(6,8,12,.82);z-index:50;padding:26px">
+  <div class="card" style="max-width:1080px;margin:0 auto;height:100%;display:flex;flex-direction:column">
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px">
+      <b id="drTitle" class="mono">—</b>
+      <span id="drMeta" class="sub"></span>
+      <span style="flex:1"></span>
+      <button class="btn" id="drClose">关闭</button>
+    </div>
+    <pre id="drBody" style="flex:1;max-height:none">加载中…</pre>
+  </div>
+</div>
+
+<script>
+const $ = (s) => document.querySelector(s);
+const esc = (s) => String(s == null ? "" : s);
+function rich(text){
+  return esc(text).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
+    .replace(/&lt;b&gt;/g,"<b>").replace(/&lt;\/b&gt;/g,"</b>")
+    .replace(/\*\*(.+?)\*\*/g,"<b>$1</b>")
+    .replace(/`(.+?)`/g,"<code>$1</code>");
+}
+function el(tag, cls, html){ const d=document.createElement(tag); if(cls)d.className=cls; if(html!=null)d.innerHTML=html; return d; }
+function pill(t,k){ return el("span","pill "+(k||""), esc(t)); }
+
+const REPRO_KIND = {high:"ok", medium:"warn", downgraded:"warn", not_reproducible:"bad"};
+const STATUS_KIND = {done:"ok", partial:"warn", pending:"", not_applicable:"bad"};
+
+let METRICS = {};
+
+function openSource(path, label){
+  $("#drawer").style.display = "block";
+  $("#drTitle").textContent = path;
+  $("#drBody").textContent = "加载中…";
+  $("#drMeta").textContent = label || "";
+  fetch("/api/source?path=" + encodeURIComponent(path))
+    .then(r => r.json().then(j => ({ok:r.ok, j})))
+    .then(({ok,j}) => {
+      if(!ok){ $("#drBody").textContent = "读取失败：" + (j.detail || "未知错误"); return; }
+      if(j.kind === "directory"){
+        $("#drBody").textContent = "目录内容：\n" + (j.entries||[]).join("\n");
+        $("#drMeta").textContent = "目录";
+        return;
+      }
+      $("#drMeta").textContent = `${j.lines_total} 行　sha256:${j.sha256_12}` + (j.truncated ? "　（已截断显示）" : "");
+      $("#drBody").textContent = j.content;
+    })
+    .catch(e => { $("#drBody").textContent = "读取失败：" + e.message; });
+}
+$("#drClose").onclick = () => { $("#drawer").style.display = "none"; };
+document.addEventListener("keydown", e => { if(e.key === "Escape") $("#drawer").style.display = "none"; });
+
+async function load(){
+  const [c, m] = await Promise.all([
+    fetch("/api/claims").then(r => r.json()),
+    fetch("/api/metrics").then(r => r.json())
+  ]);
+  METRICS = Object.fromEntries((m.metrics||[]).map(x => [x.key, x]));
+
+  // ---- 覆盖率
+  const cov = c.coverage || {};
+  const box = el("div","grid g4");
+  box.append(
+    stat(cov.claim_count, "主张总数（1–11 无缺口）"),
+    stat((cov.missing_no||[]).length, "遗漏条目"),
+    stat((cov.dangling_metric_keys||[]).length, "悬空指标引用"),
+    stat(cov.ok ? "PASS" : "FAIL", "覆盖自检")
+  );
+  $("#coverage").replaceChildren(box, el("div","note",
+    "自检逻辑：主张编号必须恰好覆盖 1–11，且每条主张引用的指标 key 必须在注册表中真实存在。" +
+    "任一条件不满足则拒绝导出 —— 防止「口径页漏了一条主张」这种事故。"));
+
+  // ---- 主张表
+  const t = el("table");
+  t.innerHTML = "<thead><tr><th style='width:3%'>#</th><th style='width:5%'>Demo</th>" +
+    "<th style='width:30%'>简历主张</th><th style='width:11%'>可复现性</th>" +
+    "<th style='width:8%'>状态</th><th style='width:17%'>关联指标</th>" +
+    "<th style='width:26%'>证据形式与差异说明</th></tr></thead>";
+  const tb = el("tbody");
+  for(const cl of c.claims){
+    const tr = el("tr");
+    const msHtml = (cl.metric_keys||[]).length
+      ? cl.metric_keys.map(k => `<span class="mono">${esc(k)}</span>`).join("<br>")
+      : '<span class="sub">—（功能类，无量化指标）</span>';
+    tr.innerHTML =
+      `<td class="num">${cl.no}</td>` +
+      `<td><span class="pill">${esc(cl.demo)}</span></td>` +
+      `<td>${rich(cl.resume_claim)}</td>` +
+      `<td>${pill(cl.reproducibility_label, REPRO_KIND[cl.reproducibility])}</td>` +
+      `<td>${pill(cl.status, STATUS_KIND[cl.status])}</td>` +
+      `<td>${msHtml}</td>` +
+      `<td><div>${rich(cl.evidence)}</div>` +
+      (cl.gap_note ? `<details><summary>差异说明 / 不得越界的表述</summary><div class="inner">${rich(cl.gap_note)}</div></details>` : "") +
+      `</td>`;
+    tb.append(tr);
+  }
+  t.append(tb);
+  $("#claims").replaceChildren(t);
+
+  // ---- 指标表
+  const t2 = el("table");
+  t2.innerHTML = "<thead><tr><th style='width:14%'>指标</th><th style='width:20%'>口径定义</th>" +
+    "<th style='width:19%'>公式 / 仪器</th><th style='width:10%'>来源</th>" +
+    "<th style='width:25%'>实测值</th><th style='width:12%'>脚本</th></tr></thead>";
+  const tb2 = el("tbody");
+  for(const r of (m.metrics||[])){
+    const kind = r.provenance === "self-built" ? "self"
+               : r.provenance === "third-party" ? "third" : "existing";
+    const tr = el("tr");
+    tr.innerHTML =
+      `<td><b>${esc(r.name)}</b><div class="mono sub">${esc(r.key)}</div>` +
+      `<div class="sub">${esc(r.status)}</div></td>` +
+      `<td>${rich(r.definition)}</td>` +
+      `<td><div class="mono">${rich(r.formula)}</div><div class="sub">${rich(r.instrument)}</div></td>` +
+      `<td>${pill(r.provenance, kind)}</td>` +
+      `<td>${r.measured ? rich(r.measured) : '<span class="sub">待实测</span>'}` +
+      `${r.gap_note ? `<div class="warnbox">${rich(r.gap_note)}</div>` : ""}</td>` +
+      `<td></td>`;
+
+    const cell = tr.lastElementChild;
+    const raw = (r.script || "").trim();
+    if(raw && raw !== "—" && raw !== "-"){
+      const p = raw.split("::")[0].trim();
+      const b = el("button","btn","查看脚本");
+      b.onclick = () => openSource(p, raw);
+      cell.append(b);
+      if(raw.includes("::")) cell.append(el("div","mono sub", esc(raw.split("::")[1])));
+    } else {
+      cell.append(el("span","sub","—"));
+    }
+    tb2.append(tr);
+  }
+  t2.append(tb2);
+  $("#metrics").replaceChildren(t2);
+}
+function stat(n, label){
+  const d = el("div","stat");
+  d.append(el("div","n", esc(n)), el("div","l", esc(label)));
+  return d;
+}
+document.addEventListener("DOMContentLoaded", load);
+</script>
+</body>
+</html>

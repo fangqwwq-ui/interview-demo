@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>组件来源声明</title>
+<link rel="stylesheet" href="/static/base.css" />
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <h1>组件来源声明 <span class="ver">三分类账本</span></h1>
+    <div class="sub">任何一项能力都必须能归入「第三方开源 / 既有自研 / 本次新增」之一，且不得越界声称。</div>
+    <nav class="tabs">
+      <a href="/">概览与入口</a>
+      <a href="/claims">简历 11 条主张 · 指标口径</a>
+      <a class="on" href="/components">组件来源声明</a>
+      <a href="/docs" target="_blank" rel="noopener">接口文档 (OpenAPI)</a>
+    </nav>
+  </header>
+
+  <div class="decl">
+    <b>为什么这一页必须存在</b>：演示里最容易翻车的一句话是「这个是我做的」。
+    下面把每个组件按来源分三类，并写明<b>使用边界</b>与<b>当场核实方式</b> ——
+    例如 <span class="mono">aigc-comic</span> 的「状态机 + 断点续跑」是<b>既有能力，不是本次自研</b>，
+    已被明确标注。
+  </div>
+
+  <div id="legend"><div class="spin">加载中…</div></div>
+
+  <h2>第三方开源</h2>
+  <div class="grid g2" id="third"><div class="spin">加载中…</div></div>
+
+  <h2>既有自研（不在本仓库）</h2>
+  <div class="grid g2" id="existing"><div class="spin">加载中…</div></div>
+
+  <h2>本次新增（本仓库）</h2>
+  <div class="grid g2" id="new"><div class="spin">加载中…</div></div>
+
+  <div class="foot">
+    数据源 <span class="mono">portal/components.json</span>，由
+    <span class="mono">portal/provenance.py</span> 生成。
+    第三方组件的完整实测记录见 <span class="mono">third_party/README.md</span>。
+  </div>
+</div>
+
+<script>
+const $ = (s) => document.querySelector(s);
+const esc = (s) => String(s == null ? "" : s);
+function rich(t){
+  return esc(t).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
+    .replace(/&lt;b&gt;/g,"<b>").replace(/&lt;\/b&gt;/g,"</b>")
+    .replace(/\*\*(.+?)\*\*/g,"<b>$1</b>")
+    .replace(/`(.+?)`/g,"<code>$1</code>");
+}
+function el(tag, cls, html){ const d=document.createElement(tag); if(cls)d.className=cls; if(html!=null)d.innerHTML=html; return d; }
+const KIND_PILL = {third_party:"third", existing:"existing", new:"self"};
+
+function card(c){
+  const d = el("div","card");
+  const hd = el("div","hd");
+  hd.append(el("h3","", esc(c.name)));
+  hd.append(el("span","pill "+(KIND_PILL[c.kind]||""), esc(c.kind_label)));
+  d.append(hd);
+  d.append(el("div","", rich(c.role)));
+  const body = el("div"); 
+  body.append(kv("许可", c.license));
+  body.append(kv("来源", c.source));
+  d.append(body);
+  if(c.boundary){
+    d.append(el("div","warnbox", "<b>使用边界</b>：" + rich(c.boundary)));
+  }
+  if(c.verify){
+    d.append(el("div","note", "<b>当场核实</b>：" + rich(c.verify)));
+  }
+  return d;
+}
+function kv(k, v){
+  const d = el("div","kv");
+  d.append(el("span","k", esc(k)), el("span","", rich(v)));
+  return d;
+}
+
+async function load(){
+  let d;
+  try{
+    const r = await fetch("/api/components");
+    d = await r.json();
+  }catch(e){
+    $("#third").replaceChildren(el("div","errbox","加载失败：" + esc(e.message)));
+    return;
+  }
+  const cnt = d.counts || {};
+  const legend = el("div","grid g4");
+  for(const [kind, label] of Object.entries(d.kind_labels || {})){
+    const s = el("div","stat");
+    s.append(el("div","n", esc(cnt[kind] || 0)), el("div","l", esc(label)));
+    legend.append(s);
+  }
+  $("#legend").replaceChildren(legend);
+
+  const buckets = {third_party:[], existing:[], new:[]};
+  for(const c of (d.components||[])) (buckets[c.kind] || buckets.new).push(c);
+  for(const [kind, host] of [["third_party","#third"],["existing","#existing"],["new","#new"]]){
+    const h = $(host);
+    if(!buckets[kind].length){ h.replaceChildren(el("div","note","（无）")); continue; }
+    h.replaceChildren(...buckets[kind].map(card));
+  }
+}
+document.addEventListener("DOMContentLoaded", load);
+</script>
+</body>
+</html>

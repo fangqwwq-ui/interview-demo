@@ -15,10 +15,17 @@ data/index/*
 !data/index/.gitkeep
 demo_c_manju/outputs/*
 !demo_c_manju/outputs/.gitkeep
-demo_b_copywriting/data/raw/*
-!demo_b_copywriting/data/raw/.gitkeep
+# Demo B 语料分两层，入库策略必须区别对待：
+#   raw/   —— 人工撰写的源数据，是整个 Demo 的输入。**必须入库**，
+#            否则 clone 下来无法复现，与「可复现」的前提直接冲突。
+#   clean/ —— ingest.py 的确定性产物（同输入必得同输出），可由一条命令重建，
+#            因此不入库，避免"两份真相"。
 demo_b_copywriting/data/clean/*
 !demo_b_copywriting/data/clean/.gitkeep
+
+# 排序索引：由 build_index.py 重建，且与编码器强绑定，不入库
+demo_b_copywriting/data/index/*
+!demo_b_copywriting/data/index/.gitkeep
 
 # 引入的第三方组件不带其 git 历史
 third_party/humanize-chinese/.git/

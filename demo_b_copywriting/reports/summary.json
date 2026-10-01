@@ -1,0 +1,233 @@
+{
+  "generated_at": "2026-10-01T22:08:53+08:00",
+  "generated_by": "demo_b_copywriting/evaluate.py",
+  "eval_set": {
+    "file": "demo_b_copywriting\\data\\clean\\ai_style_eval.jsonl",
+    "n": 20,
+    "verticals": [
+      "健康生活",
+      "数码评测",
+      "母婴育儿",
+      "职场效率",
+      "营销种草"
+    ],
+    "registers": [
+      "公文腔",
+      "种草腔",
+      "科普腔",
+      "评测腔"
+    ]
+  },
+  "arms": [
+    "original",
+    "kernel"
+  ],
+  "index": {
+    "index_dir": "E:\\interview-demo\\data\\index\\demo_b",
+    "doc_count": 35,
+    "corpus_digest": "a43ddadd379d1fbc",
+    "built_at": "2026-10-01T20:58:05+08:00",
+    "encoder": {
+      "backend": "hashing-ngram",
+      "model": "charngram-dim512",
+      "dim": 512,
+      "is_fallback": true
+    },
+    "store": {
+      "backend": "numpy-bruteforce",
+      "dim": 512,
+      "size": 35,
+      "metric": "cosine",
+      "is_fallback": true,
+      "note": "O(N) 暴力检索，仅适用于 Demo 规模"
+    },
+    "built_with_encoder": "hashing-ngram"
+  },
+  "prompt_version": null,
+  "llm": {
+    "available": false,
+    "health": {
+      "mode": "hybrid",
+      "order": [
+        "ollama"
+      ],
+      "providers": {
+        "cloud": {
+          "ok": false,
+          "provider": "cloud",
+          "error": "DASHSCOPE_API_KEY not set",
+          "base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+          "model": "qwen-plus"
+        },
+        "local": {
+          "ok": false,
+          "provider": "ollama",
+          "error": "ConnectError: [WinError 10061] 由于目标计算机积极拒绝，无法连接。"
+        }
+      }
+    }
+  },
+  "by_arm": {
+    "original": {
+      "label": "原文（对照组）",
+      "n_total": 20,
+      "n_ok": 20,
+      "n_error": 0,
+      "detection_before_mean": 2.2,
+      "detection_after_mean": 2.2,
+      "score_drop_mean": 0,
+      "score_drop_median": 0.0,
+      "tells_before_mean": 2.15,
+      "tells_after_mean": 2.15,
+      "tells_drop_mean": 0,
+      "tells_drop_total": 0,
+      "grammar_before_mean": 0.2,
+      "grammar_after_mean": 0.2,
+      "grammar_new_anomaly_records": 0,
+      "fidelity_mean": null,
+      "fidelity_reliable": false,
+      "length_ratio_mean": 1.0,
+      "verdicts": {
+        "pass": 20
+      },
+      "elapsed_s_mean": 0.0,
+      "retrieval_ms_mean": 0.0
+    },
+    "kernel": {
+      "label": "规则改写（第三方 humanize-chinese）",
+      "n_total": 20,
+      "n_ok": 20,
+      "n_error": 0,
+      "detection_before_mean": 2.2,
+      "detection_after_mean": 1,
+      "score_drop_mean": 1.2,
+      "score_drop_median": 0.0,
+      "tells_before_mean": 2.15,
+      "tells_after_mean": 1.7,
+      "tells_drop_mean": 0.45,
+      "tells_drop_total": 9,
+      "grammar_before_mean": 0.2,
+      "grammar_after_mean": 0.2,
+      "grammar_new_anomaly_records": 0,
+      "fidelity_mean": null,
+      "fidelity_reliable": false,
+      "length_ratio_mean": 1.0189,
+      "verdicts": {
+        "review": 16,
+        "pass": 4
+      },
+      "elapsed_s_mean": 0.4345,
+      "retrieval_ms_mean": 0.0
+    }
+  },
+  "by_register": {
+    "公文腔": {
+      "n": 11,
+      "kernel_score_zero": 8,
+      "kernel_score_mean": 2.5455,
+      "kernel_score_max": 16,
+      "tells_mean": 1.9091,
+      "tells_zero": 0,
+      "note": "kernel_score_* 来自第三方检测器；tells_* 来自自研词典"
+    },
+    "种草腔": {
+      "n": 4,
+      "kernel_score_zero": 3,
+      "kernel_score_mean": 1,
+      "kernel_score_max": 4,
+      "tells_mean": 2.75,
+      "tells_zero": 0,
+      "note": "kernel_score_* 来自第三方检测器；tells_* 来自自研词典"
+    },
+    "科普腔": {
+      "n": 1,
+      "kernel_score_zero": 1,
+      "kernel_score_mean": 0,
+      "kernel_score_max": 0,
+      "tells_mean": 3,
+      "tells_zero": 0,
+      "note": "kernel_score_* 来自第三方检测器；tells_* 来自自研词典"
+    },
+    "评测腔": {
+      "n": 4,
+      "kernel_score_zero": 2,
+      "kernel_score_mean": 3,
+      "kernel_score_max": 8,
+      "tells_mean": 2,
+      "tells_zero": 0,
+      "note": "kernel_score_* 来自第三方检测器；tells_* 来自自研词典"
+    }
+  },
+  "retrieval_bench": {
+    "queries": 20,
+    "repeat": 3,
+    "samples": 60,
+    "median_ms": 0.01,
+    "mean_ms": 0.014,
+    "p95_ms": 0.035,
+    "min_ms": 0.009,
+    "max_ms": 0.109,
+    "store_backend": "numpy-bruteforce"
+  },
+  "instruments": {
+    "detector": {
+      "self_built": false,
+      "component": "humanize-chinese",
+      "commit": "efdefaa0ead85cfde3fe36450a06cbe995792bda",
+      "used_for": "detection-only"
+    },
+    "fidelity": {
+      "self_built": true,
+      "method": "cosine similarity of L2-normalized embeddings"
+    },
+    "grammar": {
+      "self_built": true,
+      "rules": [
+        "R1_function_word_doubling",
+        "R2_char_triple_repeat",
+        "R3_dangling_particle",
+        "R4_punct_anomaly"
+      ]
+    },
+    "tells": {
+      "self_built": true,
+      "hard_literal": 41,
+      "hard_template": 10,
+      "soft_signals": 5,
+      "by_category": {
+        "过渡套话": 7,
+        "万能动词": 6,
+        "空洞评价": 16,
+        "营销话术": 9,
+        "育儿套话": 3,
+        "模板句式": 10
+      }
+    }
+  },
+  "tells_dictionary": {
+    "hard_literal": 41,
+    "hard_template": 10,
+    "soft_signals": 5,
+    "by_category": {
+      "过渡套话": 7,
+      "万能动词": 6,
+      "空洞评价": 16,
+      "营销话术": 9,
+      "育儿套话": 3,
+      "模板句式": 10
+    }
+  },
+  "caveats": [
+    "对照组（原文）的分数差恒为 0，作用是提供同批次基准线，不代表「表现好」。",
+    "内核检测器灵敏度分语域，得 0 分不等于没有 AI 味 —— 必须与自研词典并报。",
+    "语义保真度在兜底编码器下不具语义意义，报告已标出 fidelity_reliable。",
+    "所有效果数字都绑定具体通道（provider/model）与提示词版本，跨版本不可直接比。"
+  ],
+  "updated_metrics": [
+    "b_detection_score_drop",
+    "b_ai_tell_residual",
+    "b_semantic_fidelity",
+    "b_grammar_anomalies",
+    "b_retrieval_latency"
+  ]
+}

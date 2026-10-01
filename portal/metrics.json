@@ -11,13 +11,32 @@
       "dataset": "demo_b_copywriting/data/clean 下的评测集",
       "script": "demo_b_copywriting/evaluate.py",
       "instrument": "humanize-chinese 检测器（第三方开源，commit efdefaa）",
-      "status": "pending",
-      "measured": null,
-      "gap_note": "简历值是「平台检测通过率」，本 Demo 用开源检测器的分数代理。两者不是同一把尺子，数值不可直接对比 —— 只在同一次评测内做前后对照。",
+      "status": "measured",
+      "measured": "规则改写（第三方 humanize-chinese）：检测分均值 2.2 → 1，均降 1.2 分（中位数 0.0），n=20",
+      "gap_note": "简历值是「平台检测通过率」，本 Demo 用开源检测器的分数代理，两者不是同一把尺子。**更重要的限制**：该检测器的灵敏度分语域 —— 20 条中 14 条内核得 0 分，对「评测腔 / 种草腔」覆盖不足。因此本项必须与 b_ai_tell_residual 并报，不得单独引用。详见 third_party/README.md。",
       "provenance": "third-party",
       "tags": [
         "demo-b",
         "detection"
+      ]
+    },
+    {
+      "key": "b_ai_tell_residual",
+      "name": "AI 味表达残留数",
+      "resume_claim": "（支撑「语义保留改写」的可解释度量）",
+      "definition": "改写后文本中命中的 AI 高频表达处数（含短语与模板句式两类）",
+      "formula": "Σ 命中处数；词典见 demo_b_copywriting/tells.py（硬禁用 41 条 + 模板 10 条）",
+      "dataset": "demo_b_copywriting/data/clean/ai_style_eval.jsonl",
+      "script": "demo_b_copywriting/tells.py::count",
+      "instrument": "自研 AI 味词典（本项目自建，非第三方）",
+      "status": "measured",
+      "measured": "规则改写（第三方 humanize-chinese）：均命中 2.15 → 1.7 处，均减少 0.45 处，合计减少 9 处（n=20）",
+      "gap_note": "本指标存在的理由是：第三方内核检测器在「评测腔 / 种草腔」上灵敏度不足（20 条评测集有 14 条得 0 分），单一仪器会漏测。词典只覆盖可逐条指认的表达，不等于完整的「AI 味」定义。",
+      "provenance": "self-built",
+      "tags": [
+        "demo-b",
+        "quality",
+        "instrument"
       ]
     },
     {
@@ -29,8 +48,8 @@
       "dataset": "同上评测集",
       "script": "common/metrics/text_metrics.py::semantic_fidelity",
       "instrument": "bge-small-zh-v1.5（无 torch 环境下降级为 hashing-ngram 兜底）",
-      "status": "pending",
-      "measured": null,
+      "status": "measured",
+      "measured": "未测出可用值 —— 当前环境缺 sentence-transformers，向量化走零依赖兜底，余弦不具语义意义，已排除在判定之外",
       "gap_note": "兜底向量化后端不具语义能力，指标会失真 —— 口径页必须标出实际使用的后端。",
       "provenance": "self-built",
       "tags": [
@@ -47,8 +66,8 @@
       "dataset": "同上评测集",
       "script": "common/metrics/text_metrics.py::scan_grammar_anomalies",
       "instrument": "自研规则集",
-      "status": "pending",
-      "measured": null,
+      "status": "measured",
+      "measured": "规则改写（第三方 humanize-chinese）：20 条中有 0 条出现新增语法异常；均命中 0.2 → 0.2",
       "gap_note": "规则集只覆盖可机械判定的异常（叠字、悬空助词、标点异常等），不等于完整语法检查。用途是暴露「规则改写会破坏语法」这一实测事实。",
       "provenance": "self-built",
       "tags": [
@@ -65,9 +84,9 @@
       "dataset": "构建好的语料索引",
       "script": "demo_b_copywriting/evaluate.py",
       "instrument": "FAISS IndexFlatIP（不可用时降级 numpy 暴力检索）",
-      "status": "pending",
-      "measured": null,
-      "gap_note": "仅在 Demo 规模（数千条）下测量；十万级以上需换 IVF/HNSW 并重新标定召回。",
+      "status": "measured",
+      "measured": "中位数 0.01 ms，P95 0.035 ms（60 次采样，后端 numpy-bruteforce，语料 20 条查询 / 35 篇文档）",
+      "gap_note": "仅在 Demo 规模（数十~数千条）下测量，且**不含向量化耗时**（只测向量检索本身）。十万级以上需换 IVF/HNSW 并重新标定召回率。",
       "provenance": "self-built",
       "tags": [
         "demo-b",

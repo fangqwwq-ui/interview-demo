@@ -63,6 +63,23 @@ METRICS: List[MetricEntry] = [
         tags=["demo-b", "detection"],
     ),
     MetricEntry(
+        key="b_ai_tell_residual",
+        name="AI 味表达残留数",
+        resume_claim="（支撑「语义保留改写」的可解释度量）",
+        definition="改写后文本中命中的 AI 高频表达处数（含短语与模板句式两类）",
+        formula="Σ 命中处数；词典见 demo_b_copywriting/tells.py（硬禁用 41 条 + 模板 10 条）",
+        dataset="demo_b_copywriting/data/clean/ai_style_eval.jsonl",
+        script="demo_b_copywriting/tells.py::count",
+        instrument="自研 AI 味词典（本项目自建，非第三方）",
+        provenance="self-built",
+        gap_note=(
+            "本指标存在的理由是：第三方内核检测器在「评测腔 / 种草腔」上灵敏度不足"
+            "（20 条评测集有 14 条得 0 分），单一仪器会漏测。"
+            "词典只覆盖可逐条指认的表达，不等于完整的「AI 味」定义。"
+        ),
+        tags=["demo-b", "quality", "instrument"],
+    ),
+    MetricEntry(
         key="b_semantic_fidelity",
         name="语义保真度",
         resume_claim="语义保留改写",
@@ -208,6 +225,20 @@ def by_key(key: str) -> MetricEntry:
         if m.key == key:
             return m
     raise KeyError(f"unknown metric key: {key}")
+
+
+def set_measured(key: str, value: str, *, gap_note: str | None = None) -> MetricEntry:
+    """回填实测值。
+
+    设计意图：禁止在文档里手写数字，只允许由评测脚本调用本函数回填。
+    这样「文档里的数字」永远能追溯到「哪次评测写进去的」。
+    """
+    entry = by_key(key)
+    entry.status = "measured"
+    entry.measured = value
+    if gap_note is not None:
+        entry.gap_note = gap_note
+    return entry
 
 
 def gaps() -> List[MetricEntry]:

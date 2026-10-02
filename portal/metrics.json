@@ -103,7 +103,7 @@
       "script": "scripts/demo_a_e2e.py",
       "instrument": "yolo11n.onnx(10.42 MiB) + onnxruntime-gpu 1.26.0 + CUDAExecutionProvider（运行时 DLL 只读复用自 D:/ComfyUI 的 torch 2.7.0+cu128）",
       "status": "measured",
-      "measured": "7.63 ms（10 次取中位，min/max 未记录于本项）",
+      "measured": "7.39 ms（10 次取中位，min/max 未记录于本项）",
       "gap_note": "实测 provider=['CUDAExecutionProvider', 'CPUExecutionProvider']，是否降级=False；输入 810x1080，检出 5 个目标。该数字**含 letterbox 预处理 + NMS + 坐标反算**，不含模型首次加载。⚠️ 必须记录实际生效的 provider（Session.get_providers()）—— get_available_providers() 在 ORT 缺依赖时仍会列出 CUDAExecutionProvider 而实际已静默降级 CPU。",
       "provenance": "self-built",
       "tags": [
@@ -122,13 +122,32 @@
       "script": "scripts/demo_a_e2e.py",
       "instrument": "faster-whisper 1.2.1 (CTranslate2 4.8.2) / device=cpu / compute_type=int8",
       "status": "measured",
-      "measured": "13.41 ms（device=cpu，compute_type=int8）",
-      "gap_note": "本机无可用 TTS，无法合成真实语音。该数字只证明**推理链路与 VAD 行为正确**（纯音调被正确判为无语音 → 返回空文本），**不构成语音识别准确率证据**；识别准确率需真实中文录音后另测。模型加载另计 0.41 s，不与推理耗时混算。",
+      "measured": "1379.55 ms（device=cpu，compute_type=int8）",
+      "gap_note": "本机无可用 TTS，无法合成真实语音。该数字只证明**推理链路与 VAD 行为正确**（纯音调被正确判为无语音 → 返回空文本），**不构成语音识别准确率证据**；识别准确率需真实中文录音后另测。模型加载另计 1.08 s，不与推理耗时混算。",
       "provenance": "self-built",
       "tags": [
         "demo-a",
         "asr",
         "performance"
+      ]
+    },
+    {
+      "key": "a_asr_accuracy",
+      "name": "语音识别准确率（整句正确率 + 字符错误率）",
+      "resume_claim": "（简历未直接给出，作为技术验证补充项）",
+      "definition": "SRA = 规范化后与标准答案**完全一致**的条数占比；CER = 编辑距离 / 标准答案实义字符数。规范化 = 去标点空白 + 繁简归一（whisper 输出常为繁体，标注为简体）",
+      "formula": "SRA = 完全正确条数 / 总条数；CER = levenshtein(ref, hyp) / len(ref)",
+      "dataset": "12 条 edge-tts 合成中文语音（outputs/demo_a/audio/，两种音色交替，覆盖结构化过滤/语义描述/口语/数字混读四类问法）",
+      "script": "scripts/eval_asr.py（数据由 scripts/gen_speech_eval.py 生成）",
+      "instrument": "faster-whisper 1.2.1 small / CTranslate2 4.8.2 / device=cpu / compute_type=int8",
+      "status": "measured",
+      "measured": "整句正确率 6/12 = 0.5000；平均 CER 0.1649（模型 small，cpu/int8）",
+      "gap_note": "12 条 edge-tts 合成中文语音（真人音色，两种音色交替），平均推理 1398 ms，模型加载另计 1.14 s不混算。⚠️ 口径边界：合成语音信噪比高、无方言口音与背景噪声，**识别率系统性偏高**，不可作为真人嘈杂场景的性能依据；样本量小（n=12）置信区间宽，适合做回归护栏。判定用严格相等（SRA）+ 字符错误率（CER），未使用语义相似度打分。",
+      "provenance": "self-built",
+      "tags": [
+        "demo-a",
+        "asr",
+        "accuracy"
       ]
     },
     {

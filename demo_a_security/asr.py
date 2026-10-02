@@ -309,17 +309,18 @@ class ASRHandle:
         vad_filter=True 会先做语音活动检测，静音段不参与识别，
         既提速也减少幻听。
 
-        ⚠️ 为什么要支持「数组」而不是只支持文件（本机实测踩到）：
-        faster-whisper 声明 `av>=11`（**没有上限**），但 PyAV 19 移除了
-        ``av.open(..., metadata_errors=...)`` 这个参数，
-        于是 1.2.1 + av 19 在**读任何音频文件时**都会抛
-        ``TypeError: open() got an unexpected keyword argument 'metadata_errors'``。
-        传 numpy 数组时 faster-whisper 走的是另一条解码路径（不经过 av），
-        因此不受影响。
-        为不把整个功能卡在这个上游版本约束缺失上，本模块：
-          - 数组输入：直接可用；
-          - 文件输入：先自己用 wave/av 读成数组再交给模型，
-            读失败时给出**明确的版本提示**，而不是抛一句无关的 TypeError。
+        ⚠️ 为什么要支持「数组」而不是只支持文件（本机实测踩到两处不兼容）：
+        faster-whisper 声明 `av>=11`（**没有上限**），而 PyAV 19 有两处破坏性变更：
+          ① 移除了 ``av.open(..., metadata_errors=...)`` → faster-whisper 1.2.1
+             读任何文件都会抛 ``TypeError: open() got an unexpected keyword
+             argument 'metadata_errors'``；
+          ② ``Container.decode()`` 不再接受无参数调用 → 必须写
+             ``c.decode(audio=0)``，否则 ``AssertionError: Container is not open``。
+        本模块因此：
+          - 数组输入：直接可用（faster-whisper 的数组路径不经过 av）；
+          - **wav 文件**：用标准库 ``wave`` 自己解码（8/16/32 bit + 多声道混单声道
+            + 线性重采样），完全不碰 av，**最稳**；
+          - 其他格式：用 PyAV 19 的新签名解码，并对异常类型都给出可操作提示。
         """
         if self._model is None:
             raise RuntimeError("模型未加载或已close()")
@@ -370,19 +371,26 @@ class ASRHandle:
             # wav 用标准库读，避开 av 的版本问题
             if p.suffix.lower() == ".wav":
                 return ASRHandle._read_wav(p)
-            # 其他格式退回 av；失败时给出可操作的提示
+            # 其他格式退回 av。⚠️ PyAV 19 改了容器 API：
+            #   旧写法 c.decode() 无参数 -> 抛 AssertionError: Container is not open
+            #   新写法必须显式给流参数 c.decode(audio=0)
+            # （这是实测出来的，不是照文档猜的：faster-whisper 1.2.1 用的还是旧写法。）
             try:
                 import av
 
                 with av.open(str(p)) as c:
-                    arr = c.decode()
-                return np.concatenate([f.to_ndarray() for f in arr]).astype(np.float32)
-            except TypeError as exc:
+                    frames = list(c.decode(audio=0))
+                if not frames:
+                    raise ValueError(f"{p.name} 中没有可解码的音频流")
+                return np.concatenate(
+                    [f.to_ndarray().reshape(-1) for f in frames]
+                ).astype(np.float32)
+            except (TypeError, AssertionError) as exc:
                 raise RuntimeError(
                     f"读取 {p.suffix} 音频失败：{exc}\n"
                     "这通常是 PyAV 版本过新导致（faster-whisper 声明 av>=11 但无上限，"
-                    "av 19 移除了 metadata_errors 参数）。\n"
-                    "两个办法：① 改用 wav 文件；② 降级："
+                    "av 19 改了 Container.decode 的签名）。\n"
+                    "两个办法：① 转成 wav 再试；② 降级："
                     "pip install 'av<19' --no-cache-dir -i https://mirrors.aliyun.com/pypi/simple/"
                 ) from exc
 

@@ -80,10 +80,25 @@ def run_visual(image: Path) -> Dict[str, Any]:
 
 
 def run_asr(model_size: str, text: str) -> Dict[str, Any]:
-    _line("② 语音：faster-whisper 识别")
+    _line("② 语音：faster-whisper 识别（真实中文语音）")
     import numpy as np
 
     from demo_a_security.asr import load_asr
+
+    # 优先用真实合成语音（edge-tts 产出，带标准答案）；
+    # 没有才退回合成音调，且**明确标注这不是准确率证据**。
+    manifest = ROOT / "outputs" / "demo_a" / "audio" / "speech_eval.jsonl"
+    real: List[Dict[str, Any]] = []
+    if manifest.exists():
+        real = [json.loads(l) for l in manifest.read_text(encoding="utf-8").splitlines() if l.strip()]
+    # 找一条与演示问题匹配的，否则用第一条
+    pick = None
+    for r in real:
+        if r.get("text") == text:
+            pick = r
+            break
+    if pick is None and real:
+        pick = real[0]
 
     print(f"  加载模型 {model_size} ...")
     t0 = time.perf_counter()
@@ -94,25 +109,50 @@ def run_asr(model_size: str, text: str) -> Dict[str, Any]:
     print(f"  是否降级：{h.info.is_fallback}")
     print(f"  CTranslate2：{h.info.ctranslate2_version}")
 
-    # 说明：本机无 TTS 可用且需要额外依赖，这里用**真实音频**做识别演示。
-    # 若提供真实录音文件，用 --audio 传入即可。
-    print(f"  目标文本：{text!r}")
-    print("  ⚠️ 本机无可用 TTS，故用合成音频验证链路（VAD 会滤掉非语音内容）。")
+    if pick is not None:
+        audio = ROOT / pick["audio"]
+        print(f"  真实语音：{pick['id']}（{pick['voice']}）")
+        print(f"  标准答案：{pick['text']!r}")
+        tr = h.transcribe(str(audio), language="zh")
+        print(f"  推理耗时：{tr.latency_ms:.0f} ms  音频时长 {tr.audio_duration_s:.1f} s")
+        print(f"  识别结果：{tr.text!r}")
+        # 规范化后比对（去标点 + 繁简），与 eval_asr.py 同一口径
+        try:
+            from opencc import OpenCC
+
+            cc = OpenCC("t2s")
+            norm = lambda s: "".join(
+                ch for ch in cc.convert(s or "")
+                if ch not in " \t\n，。？！、；：,.?!;:"
+            )
+        except Exception:
+            norm = lambda s: (s or "").strip()
+        exact = norm(tr.text) == norm(pick["text"])
+        print(f"  规范化后与标准答案{'一致 ✅' if exact else '不一致 ⚠️'}"
+              f"（准确率统计见 scripts/eval_asr.py）")
+        h.close()
+        return {
+            "ok": True, "device": h.info.device,
+            "compute_type": h.info.compute_type, "is_fallback": h.info.is_fallback,
+            "latency_ms": round(tr.latency_ms, 2), "load_s": round(load_s, 2),
+            "source": "真实中文语音(edge-tts)",
+            "ref": pick["text"], "hyp": tr.text, "exact": exact,
+        }
+
+    # 退化路径：合成音调
+    print("  ⚠️ 未找到真实语音清单，退回合成音调（不构成准确率证据）")
     sr = 16000
     t = np.linspace(0, 1.0, sr, endpoint=False)
     sig = (0.15 * np.sin(2 * np.pi * 180 * t)).astype(np.float32)
     tr = h.transcribe(sig, language="zh")
     print(f"  推理耗时：{tr.latency_ms:.0f} ms")
-    print(f"  识别结果：{tr.text!r}（纯音调，VAD 正确判为无语音 → 空文本，符合预期）")
+    print(f"  识别结果：{tr.text!r}（纯音调，VAD 正确判为无语音 → 空文本）")
     h.close()
     return {
-        "ok": True,
-        "device": h.info.device,
-        "compute_type": h.info.compute_type,
-        "is_fallback": h.info.is_fallback,
-        "latency_ms": round(tr.latency_ms, 2),
-        "load_s": round(load_s, 2),
-        "empty_on_tone": tr.text == "",
+        "ok": True, "device": h.info.device,
+        "compute_type": h.info.compute_type, "is_fallback": h.info.is_fallback,
+        "latency_ms": round(tr.latency_ms, 2), "load_s": round(load_s, 2),
+        "source": "合成音调（非准确率证据）", "empty_on_tone": tr.text == "",
     }
 
 
@@ -225,7 +265,7 @@ def publish_metrics(res: Dict[str, Any]) -> None:
 def main(argv: Optional[List[str]] = None) -> int:
     ap = argparse.ArgumentParser(description="Demo A 端到端验证")
     ap.add_argument("--image", default=str(ROOT / "outputs" / "demo_a" / "vision" / "bus.jpg"))
-    ap.add_argument("--asr-size", default="tiny",
+    ap.add_argument("--asr-size", default="small",
                     choices=["tiny", "base", "small", "medium", "large-v3"])
     ap.add_argument("--no-asr", action="store_true", help="跳过语音环节")
     ap.add_argument("--no-publish", action="store_true", help="不回填 registry")

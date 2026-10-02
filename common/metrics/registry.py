@@ -178,6 +178,32 @@ METRICS: List[MetricEntry] = [
         tags=["demo-a", "asr", "performance"],
     ),
     MetricEntry(
+        key="a_asr_accuracy",
+        name="语音识别准确率（整句正确率 + 字符错误率）",
+        resume_claim="（简历未直接给出，作为技术验证补充项）",
+        definition=(
+            "SRA = 规范化后与标准答案**完全一致**的条数占比；"
+            "CER = 编辑距离 / 标准答案实义字符数。"
+            "规范化 = 去标点空白 + 繁简归一（whisper 输出常为繁体，标注为简体）"
+        ),
+        formula="SRA = 完全正确条数 / 总条数；CER = levenshtein(ref, hyp) / len(ref)",
+        dataset=(
+            "12 条 edge-tts 合成中文语音（outputs/demo_a/audio/，"
+            "两种音色交替，覆盖结构化过滤/语义描述/口语/数字混读四类问法）"
+        ),
+        script="scripts/eval_asr.py（数据由 scripts/gen_speech_eval.py 生成）",
+        instrument="faster-whisper 1.2.1 small / CTranslate2 4.8.2 / device=cpu / compute_type=int8",
+        provenance="self-built",
+        status="pending",
+        gap_note=(
+            "占位 —— 真实说明由 scripts/eval_asr.py --publish-metrics 按实测数据生成。"
+            "⚠️ 关键口径边界：语音是 **TTS 合成**的真人音色，不是现场真人录音；"
+            "合成语音信噪比高、无方言口音与背景噪声，**识别率系统性偏高**，"
+            "不可作为真人嘈杂场景的性能依据。n=12 置信区间宽，适合做回归护栏。"
+        ),
+        tags=["demo-a", "asr", "accuracy"],
+    ),
+    MetricEntry(
         key="a_rag_accuracy",
         name="RAG 检索命中率（top-1 精确命中）",
         resume_claim="智能应答准确率 72% → 94%",

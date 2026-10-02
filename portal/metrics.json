@@ -94,6 +94,44 @@
       ]
     },
     {
+      "key": "a_vision_latency",
+      "name": "YOLO11n 目标检测推理耗时",
+      "resume_claim": "（简历未直接给出，作为技术验证补充项）",
+      "definition": "单张图片端到端检测耗时（letterbox 预处理 + ONNX 推理 + NMS + 坐标反算），不含模型首次加载与图片解码",
+      "formula": "10 次连续推理取中位数（perf_counter 差值），预热 1 次后计时",
+      "dataset": "outputs/demo_a/vision/bus.jpg（810x1080，ultralytics 官方样例）",
+      "script": "scripts/demo_a_e2e.py",
+      "instrument": "yolo11n.onnx(10.42 MiB) + onnxruntime-gpu 1.26.0 + CUDAExecutionProvider（运行时 DLL 只读复用自 D:/ComfyUI 的 torch 2.7.0+cu128）",
+      "status": "measured",
+      "measured": "7.63 ms（10 次取中位，min/max 未记录于本项）",
+      "gap_note": "实测 provider=['CUDAExecutionProvider', 'CPUExecutionProvider']，是否降级=False；输入 810x1080，检出 5 个目标。该数字**含 letterbox 预处理 + NMS + 坐标反算**，不含模型首次加载。⚠️ 必须记录实际生效的 provider（Session.get_providers()）—— get_available_providers() 在 ORT 缺依赖时仍会列出 CUDAExecutionProvider 而实际已静默降级 CPU。",
+      "provenance": "self-built",
+      "tags": [
+        "demo-a",
+        "vision",
+        "performance"
+      ]
+    },
+    {
+      "key": "a_asr_latency",
+      "name": "faster-whisper 语音识别耗时",
+      "resume_claim": "（简历未直接给出，作为技术验证补充项）",
+      "definition": "单段音频（1.0 s 合成音）转写耗时，含 VAD 语音活动检测",
+      "formula": "perf_counter 差值；另单独记录模型加载耗时（两者不可混算）",
+      "dataset": "合成音频 1.0 s / 16 kHz 单声道（纯音调，用于验证链路与 VAD 行为）",
+      "script": "scripts/demo_a_e2e.py",
+      "instrument": "faster-whisper 1.2.1 (CTranslate2 4.8.2) / device=cpu / compute_type=int8",
+      "status": "measured",
+      "measured": "13.41 ms（device=cpu，compute_type=int8）",
+      "gap_note": "本机无可用 TTS，无法合成真实语音。该数字只证明**推理链路与 VAD 行为正确**（纯音调被正确判为无语音 → 返回空文本），**不构成语音识别准确率证据**；识别准确率需真实中文录音后另测。模型加载另计 0.41 s，不与推理耗时混算。",
+      "provenance": "self-built",
+      "tags": [
+        "demo-a",
+        "asr",
+        "performance"
+      ]
+    },
+    {
       "key": "a_rag_accuracy",
       "name": "RAG 检索命中率（top-1 精确命中）",
       "resume_claim": "智能应答准确率 72% → 94%",

@@ -88,7 +88,8 @@ def run_asr(model_size: str, text: str) -> Dict[str, Any]:
     print(f"  加载模型 {model_size} ...")
     t0 = time.perf_counter()
     h = load_asr(model_size, device="cpu")
-    print(f"  加载耗时：{time.perf_counter() - t0:.2f} s")
+    load_s = time.perf_counter() - t0
+    print(f"  加载耗时：{load_s:.2f} s")
     print(f"  device={h.info.device}  compute_type={h.info.compute_type}")
     print(f"  是否降级：{h.info.is_fallback}")
     print(f"  CTranslate2：{h.info.ctranslate2_version}")
@@ -110,6 +111,7 @@ def run_asr(model_size: str, text: str) -> Dict[str, Any]:
         "compute_type": h.info.compute_type,
         "is_fallback": h.info.is_fallback,
         "latency_ms": round(tr.latency_ms, 2),
+        "load_s": round(load_s, 2),
         "empty_on_tone": tr.text == "",
     }
 
@@ -179,12 +181,54 @@ def run_rag_and_ticket() -> Dict[str, Any]:
     }
 
 
+def publish_metrics(res: Dict[str, Any]) -> None:
+    """把本轮实测值回填 registry。**文档里不手写数字**。
+
+    必须 set_measured 之后紧接 export_json，否则 status/measured 不会
+    合并进 metrics.json（该坑本项目已踩过一次）。
+    """
+    from common.metrics import registry
+
+    v = res.get("visual", {})
+    if v.get("ok"):
+        registry.set_measured(
+            "a_vision_latency",
+            f"{v['latency_median_ms']} ms（10 次取中位，min/max 未记录于本项）",
+            gap_note=(
+                f"实测 provider={v['providers']}，是否降级={v['is_fallback']}；"
+                f"输入 810x1080，检出 {v['n_detections']} 个目标。"
+                "该数字**含 letterbox 预处理 + NMS + 坐标反算**，不含模型首次加载。"
+                "⚠️ 必须记录实际生效的 provider（Session.get_providers()）—— "
+                "get_available_providers() 在 ORT 缺依赖时仍会列出 CUDAExecutionProvider "
+                "而实际已静默降级 CPU。"
+            ),
+        )
+
+    a = res.get("asr", {})
+    if a.get("ok"):
+        registry.set_measured(
+            "a_asr_latency",
+            f"{a['latency_ms']} ms（device={a['device']}，compute_type={a['compute_type']}）",
+            gap_note=(
+                "本机无可用 TTS，无法合成真实语音。"
+                "该数字只证明**推理链路与 VAD 行为正确**"
+                "（纯音调被正确判为无语音 → 返回空文本），"
+                "**不构成语音识别准确率证据**；识别准确率需真实中文录音后另测。"
+                f"模型加载另计 {a.get('load_s', '—')} s，不与推理耗时混算。"
+            ),
+        )
+
+    registry.export_json()
+    print("\n  已回填 registry：a_vision_latency / a_asr_latency")
+
+
 def main(argv: Optional[List[str]] = None) -> int:
     ap = argparse.ArgumentParser(description="Demo A 端到端验证")
     ap.add_argument("--image", default=str(ROOT / "outputs" / "demo_a" / "vision" / "bus.jpg"))
     ap.add_argument("--asr-size", default="tiny",
                     choices=["tiny", "base", "small", "medium", "large-v3"])
     ap.add_argument("--no-asr", action="store_true", help="跳过语音环节")
+    ap.add_argument("--no-publish", action="store_true", help="不回填 registry")
     ap.add_argument("--text", default="东门有哪些未闭环的高危事件？")
     args = ap.parse_args(argv)
 
@@ -212,6 +256,11 @@ def main(argv: Optional[List[str]] = None) -> int:
     print(f"  RAG+工单：{'OK' if ok_rag else 'FAIL'}"
           f"（幂等={'通过' if res['rag_ticket'].get('idempotent') else '失败'}）")
     print(f"\n  完整结果-> {OUT_DIR / 'e2e_result.json'}")
+
+    if not args.no_publish:
+        publish_metrics(res)
+    else:
+        print("\n  （--no-publish：未回填 registry）")
     return 0 if (ok_visual and ok_rag) else 1
 
 

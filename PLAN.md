@@ -436,18 +436,50 @@ Agent 编排（事件状态机）
 
 由 `common/config.py` 的显存调度器统一管理。演示时按阶段推进，这本身就是可讲的技术点。
 
+**实测修订（2026-10-02）**：本项目最终**没有**走 torch cu128 路线，
+而是全栈换成 ONNX / CTranslate2：
+
+| 组件 | 推理运行时 | torch 需求 | 实测 |
+|---|---|---|---|
+| YOLO11n | onnxruntime-gpu（官方 onnx 10.42 MiB） | 不需要 | CUDA 生效，中位 **6.7 ms** |
+| InsightFace | onnxruntime-gpu | 不需要 | 随包已装 |
+| faster-whisper | CTranslate2 | 不需要 | cpu-int8，推理 **14 ms** |
+
+理由：本机镜像带宽约 343 KB/s，torch cu128 约 2.7 GB → **约 137 分钟**；
+换ONNX + CTranslate2 后总量约 500 MB，且**完全不引入 torch 推理**。
+CUDA 运行时是**只读复用** `D:\ComfyUI` 的 torch 2.7.0+cu128 自带的 CUDA 12.8
+（`os.add_dll_directory` + `ort.preload_dlls()`），不复制不修改 ComfyUI。
+
+> ⚠️ 「`get_available_providers()` 含 CUDA」**不等于** CUDA 真能用 —— ORT 缺依赖时
+> 不抛异常，只静默降级 CPU。判定必须以 `Session.get_providers()` 为准。
+> 本项目已在自检脚本里犯过一次「验证失败就回退清单」的假绿灯，已修正。
+
+ASR 侧 `ASRHandle.close()` 是刻意保留的：CTranslate2 会持有 CUDA 上下文，
+不释放会与 YOLO/InsightFace 抢显存，这正是分时加载要解决的问题。
+
 ### 7.3 指标可复现要求
 
-- **响应速度提升 40%**：给出「优化前」与「优化后」两版接口 + locust 压测脚本 + 报告。做法：v1 同步阻塞串行调用，v2 改异步并发 + 连接池，同机压测对比。
-- **准确率 72%→94%**：构造 ≥ 100 条问答评测集，分别跑「无 RAG」与「分层检索 RAG」，输出混淆矩阵。**若实测达不到，按实测值写，并在口径页说明差异。**
+- **响应速度提升 40%**：给出「优化前」与「优化后」两版接口 + 压测脚本 + 报告。做法：v1 同步阻塞串行调用，v2 改异步并发 + 连接池，同机压测对比。
+  **实测 +5.3% ~ +24.5%（RPS，4 档并发，26100 请求、失败 0）**，
+  低于简历值，按实测报告；且简历未说明衡量吞吐还是延迟，两者不可互相印证。
+  压测用 httpx+asyncio 而非 locust（locust 依赖 gevent，本机带宽不值得）。
+  每档 3 轮取中位数 + v1/v2 交替顺序，输出轮间波动作为可信度指标。
+- **准确率 72%→94%**：构造 ≥ 100 条问答评测集，分别跑「无 RAG」与「分层检索 RAG」。
+  **实测 0.7647 → 0.9118（n=102，绝对 +14.7pp）**，未达 94%，按实测值报告。
+  剩余 9 条为真实语义近似边界（严格口径与集合命中口径结果一致可证）。
 
 ### 7.4 验收标准
 
-- [ ] 实时画面带检测框与识别标签
-- [ ] 语音提问 → RAG 应答闭环可用
-- [ ] MCP 三个工具可被外部客户端调用，调用日志可回放
-- [ ] `bench/report.md` 含优化前后对照数据与原始压测输出
-- [ ] 评测集准确率对照表（无 RAG vs 分层 RAG）
+- [x] 实时画面带检测框与识别标签 —— `outputs/demo_a/e2e/01_detected.png`，
+      CUDAExecutionProvider 真实生效，6.7 ms，检出 bus 0.939 + 4 person
+- [x] 语音提问 → RAG 应答闭环可用 —— `scripts/demo_a_e2e.py` 串起
+      视觉→ASR→RAG→工单四层，exit=0
+- [x] MCP 三个工具可被外部客户端调用，调用日志可回放 ——
+      真实协议客户端验证 8/8（`scripts/verify_mcp_client.py`）
+- [x] `bench/report.md` 含优化前后对照数据与原始压测输出 ——
+      报告由 `scripts/bench_report.py` 从原始 JSON 生成，数字不可手改
+- [x] 评测集准确率对照表（无 RAG vs 分层 RAG）—— 102 条自建评测集，
+      0.7647 → 0.9118，分组数据见 `outputs/demo_a/eval_result.json`
 
 ---
 

@@ -132,6 +132,52 @@ METRICS: List[MetricEntry] = [
     ),
     # ---------------- Demo A ----------------
     MetricEntry(
+        key="a_vision_latency",
+        name="YOLO11n 目标检测推理耗时",
+        resume_claim="（简历未直接给出，作为技术验证补充项）",
+        definition=(
+            "单张图片端到端检测耗时（letterbox 预处理 + ONNX 推理 + NMS + "
+            "坐标反算），不含模型首次加载与图片解码"
+        ),
+        formula="10 次连续推理取中位数（perf_counter 差值），预热 1 次后计时",
+        dataset="outputs/demo_a/vision/bus.jpg（810x1080，ultralytics 官方样例）",
+        script="scripts/demo_a_e2e.py",
+        instrument=(
+            "yolo11n.onnx(10.42 MiB) + onnxruntime-gpu 1.26.0 + "
+            "CUDAExecutionProvider（运行时 DLL 只读复用自 D:/ComfyUI 的 torch 2.7.0+cu128）"
+        ),
+        provenance="self-built",
+        status="pending",
+        gap_note=(
+            "占位 —— 真实说明由 scripts/demo_a_e2e.py 回填时按实测数据生成"
+            "（含实际 provider、是否降级、min/max 分布），此处不预写数字。"
+            "⚠️ 该指标必须记录**实际生效的 provider**（Session.get_providers()），"
+            "不能用 get_available_providers() —— ORT 缺依赖时会静默降级 CPU "
+            "而那份清单仍列出 CUDA。"
+        ),
+        tags=["demo-a", "vision", "performance"],
+    ),
+    MetricEntry(
+        key="a_asr_latency",
+        name="faster-whisper 语音识别耗时",
+        resume_claim="（简历未直接给出，作为技术验证补充项）",
+        definition="单段音频（1.0 s 合成音）转写耗时，含 VAD 语音活动检测",
+        formula="perf_counter 差值；另单独记录模型加载耗时（两者不可混算）",
+        dataset="合成音频 1.0 s / 16 kHz 单声道（纯音调，用于验证链路与 VAD 行为）",
+        script="scripts/demo_a_e2e.py",
+        instrument="faster-whisper 1.2.1 (CTranslate2 4.8.2) / device=cpu / compute_type=int8",
+        provenance="self-built",
+        status="pending",
+        gap_note=(
+            "占位 —— 真实说明由 scripts/demo_a_e2e.py 回填时生成。"
+            "⚠️ 口径边界：本机无可用 TTS，无法合成真实语音，"
+            "因此该数字**只证明推理链路与 VAD 行为正确**（纯音调被正确判为无语音，"
+            "返回空文本），**不构成语音识别准确率证据**。"
+            "识别准确率需提供真实中文录音后另测。"
+        ),
+        tags=["demo-a", "asr", "performance"],
+    ),
+    MetricEntry(
         key="a_rag_accuracy",
         name="RAG 检索命中率（top-1 精确命中）",
         resume_claim="智能应答准确率 72% → 94%",

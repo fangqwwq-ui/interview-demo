@@ -21,8 +21,8 @@
 
 | 验收项 | 凭据 | 实测 |
 |---|---|---|
-| 实时画面带检测框与标签 | `outputs/demo_a/e2e/01_detected.png` | CUDA 真实生效，**6.5 ms**，检出 bus 0.939 + 4 person |
-| 语音提问 → RAG 应答闭环 | `scripts/demo_a_e2e.py`（exit=0） | **真实中文语音** 1380 ms → RAG 5~8 ms → 工单落库 |
+| 实时画面带检测框与标签 | `outputs/demo_a/e2e/01_detected.png` | CUDA 真实生效，**约 7~8 ms**（实测 6.9~9.7 ms 波动），检出 bus 0.939 + 4 person |
+| 语音提问 → RAG 应答闭环 | `scripts/demo_a_e2e.py`（exit=0） | **真实中文语音** 约 1.37 s → RAG 5~8 ms → 工单落库 |
 | MCP 三工具 + 日志回放 | `scripts/verify_mcp_client.py` | **8/8** 通过（真实 mcp 协议客户端） |
 | `bench/report.md` 对照数据 | 脚本从原始 JSON 生成 | 4 档并发，26100 请求，失败 0 |
 | 评测集准确率对照表 | `outputs/demo_a/eval_result.json` | 102 条，0.7647 → **0.9118** |
@@ -31,7 +31,7 @@
 
 | 组件 | 推理运行时 | torch | 实测 |
 |---|---|---|---|
-| YOLO11n | onnxruntime-gpu（官方 onnx 10.42 MiB） | 不需要 | CUDA 生效，7.63 ms |
+| YOLO11n | onnxruntime-gpu（官方 onnx 10.42 MiB） | 不需要 | CUDA 生效，约 7~8 ms |
 | InsightFace | onnxruntime-gpu | 不需要 | 已装 |
 | faster-whisper | CTranslate2 4.8.2 | 不需要 | cpu-int8，13.41 ms |
 
@@ -41,12 +41,13 @@
 
 ### 实测指标（5 项 Demo A，全部脚本回填）
 
-- **a_vision_latency** = **6.5 ms**（provider=CUDAExecutionProvider，未降级，含 letterbox+NMS+坐标反算）
+- **a_vision_latency** = **约 7~8 ms**（`portal/measurements.json` 里的 `measured` 为准，
+  含 letterbox+NMS+坐标反算；provider=CUDAExecutionProvider，未降级）
 - **a_asr_accuracy** = SRA **6/12 = 0.50**，平均 CER **0.1649**（faster-whisper small / cpu-int8）
   - 分组：语义描述 CER 0.043（最好）｜口语短问 CER 0.352（最差）
   - ⚠️ 语音为 **TTS 合成**（真人音色），信噪比高、无方言口音，**识别率系统性偏高**；
     n=12 置信区间宽 → 只作回归护栏，非真人场景性能依据
-- **a_asr_latency** = 真实语音 **1380 ms**（4.8 s 音频）；模型加载另计 1.08 s，不混算
+- **a_asr_latency** = 真实语音 **约 1.37 s**（4.8 s 音频）；模型加载另计约 1 s，不混算
 - **a_rag_accuracy** = **0.9118**（无 RAG 0.7647，n=102，**未达简历 94%**）
 - **a_api_latency_gain** = RPS **+5.3%~+24.5%**（**未达简历 40%**；口径不同不可互相印证）
 

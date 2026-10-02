@@ -103,8 +103,8 @@
       "script": "scripts/demo_a_e2e.py",
       "instrument": "yolo11n.onnx(10.42 MiB) + onnxruntime-gpu 1.26.0 + CUDAExecutionProvider（运行时 DLL 只读复用自 D:/ComfyUI 的 torch 2.7.0+cu128）",
       "status": "measured",
-      "measured": "7.39 ms（10 次取中位，min/max 未记录于本项）",
-      "gap_note": "实测 provider=['CUDAExecutionProvider', 'CPUExecutionProvider']，是否降级=False；输入 810x1080，检出 5 个目标。该数字**含 letterbox 预处理 + NMS + 坐标反算**，不含模型首次加载。⚠️ 必须记录实际生效的 provider（Session.get_providers()）—— get_available_providers() 在 ORT 缺依赖时仍会列出 CUDAExecutionProvider 而实际已静默降级 CPU。",
+      "measured": "7.71 ms（10 次取中位，min 6.89 / max 9.7 ms）",
+      "gap_note": "实测 provider=['CUDAExecutionProvider', 'CPUExecutionProvider']，是否降级=False；输入 810x1080，检出 5 个目标。该数字**含 letterbox 预处理 + NMS + 坐标反算**，不含模型首次加载（预热 1 次后计时）。⚠️ 必须记录实际生效的 provider（Session.get_providers()）—— get_available_providers() 在 ORT 缺依赖时仍会列出 CUDAExecutionProvider 而实际已静默降级 CPU。",
       "provenance": "self-built",
       "tags": [
         "demo-a",
@@ -122,8 +122,8 @@
       "script": "scripts/demo_a_e2e.py",
       "instrument": "faster-whisper 1.2.1 (CTranslate2 4.8.2) / device=cpu / compute_type=int8",
       "status": "measured",
-      "measured": "1379.55 ms（device=cpu，compute_type=int8）",
-      "gap_note": "本机无可用 TTS，无法合成真实语音。该数字只证明**推理链路与 VAD 行为正确**（纯音调被正确判为无语音 → 返回空文本），**不构成语音识别准确率证据**；识别准确率需真实中文录音后另测。模型加载另计 1.08 s，不与推理耗时混算。",
+      "measured": "1366.96 ms（device=cpu，compute_type=int8）",
+      "gap_note": "本机无可用 TTS，无法合成真实语音。该数字只证明**推理链路与 VAD 行为正确**（纯音调被正确判为无语音 → 返回空文本），**不构成语音识别准确率证据**；识别准确率需真实中文录音后另测。模型加载另计 1.05 s，不与推理耗时混算。",
       "provenance": "self-built",
       "tags": [
         "demo-a",

@@ -73,6 +73,8 @@ def run_visual(image: Path) -> Dict[str, Any]:
         "providers": det.info.providers,
         "is_fallback": det.info.is_fallback,
         "latency_median_ms": round(med, 2),
+        "min_ms": round(times[0], 2),
+        "max_ms": round(times[-1], 2),
         "n_detections": len(dets),
         "detections": [d.as_dict() for d in dets],
         "image": str(out_img.relative_to(ROOT)),
@@ -233,11 +235,13 @@ def publish_metrics(res: Dict[str, Any]) -> None:
     if v.get("ok"):
         registry.set_measured(
             "a_vision_latency",
-            f"{v['latency_median_ms']} ms（10 次取中位，min/max 未记录于本项）",
+            f"{v['latency_median_ms']} ms（10 次取中位，min {v.get('min_ms')} / "
+            f"max {v.get('max_ms')} ms）",
             gap_note=(
                 f"实测 provider={v['providers']}，是否降级={v['is_fallback']}；"
                 f"输入 810x1080，检出 {v['n_detections']} 个目标。"
-                "该数字**含 letterbox 预处理 + NMS + 坐标反算**，不含模型首次加载。"
+                "该数字**含 letterbox 预处理 + NMS + 坐标反算**，不含模型首次加载"
+                "（预热 1 次后计时）。"
                 "⚠️ 必须记录实际生效的 provider（Session.get_providers()）—— "
                 "get_available_providers() 在 ORT 缺依赖时仍会列出 CUDAExecutionProvider "
                 "而实际已静默降级 CPU。"

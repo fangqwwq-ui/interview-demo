@@ -147,11 +147,8 @@ METRICS: List[MetricEntry] = [
         provenance="self-built",
         status="pending",
         gap_note=(
-            "实测 baseline(无 RAG) 0.7647 -> 分层 RAG 0.9118（绝对 +14.7pp / 相对 +19.2%）。"
-            "**未达简历所写 94%，按实测值报告。**"
-            "剩余 9 条失败为真实能力边界（语义近似，如「门被撬了吗」命中"
-            "「翻越围栏」的 A-0001 而非「暴力尝试」的 A-0012），非判据问题 —— "
-            "严格口径与集合命中口径结果完全一致（均 0.9118）可证。"
+            "占位 —— 真实说明由 demo_a_security/evaluate.py 回填时按实测数据生成"
+            "（含基线对比、未达简历值的声明、剩余失败样本的性质），此处不预写数字。"
         ),
         tags=["demo-a", "rag"],
     ),
@@ -174,10 +171,8 @@ METRICS: List[MetricEntry] = [
         provenance="self-built",
         status="pending",
         gap_note=(
-            "实测提升区间 13%–28%，低于简历所写的 40%；按实测值报告。"
-            "口径差异：简历的「响应速度提升 40%」未说明衡量的是吞吐还是延迟分位，"
-            "此处明确以 RPS 为主指标并同时给出 P95，"
-            "因此不可直接与简历数字互相印证。"
+            "占位 —— 真实说明由 scripts/bench.py 回填时按实测数据生成"
+            "（含各档对应关系与测量可靠性说明），此处不预写数字。"
         ),
         tags=["demo-a", "performance"],
     ),

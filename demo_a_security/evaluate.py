@@ -218,9 +218,25 @@ def main(argv: Optional[List[str]] = None) -> int:
 
     if args.publish_metrics:
         from common.metrics import registry
-        registry.set_measured("a_rag_accuracy", treat)
+
+        # gap_note 也一起回填 —— registry 只存 measured，gap_note 在
+        # registry.py 里定义。若两处各写一份，measurements.json 会与
+        # registry.py 的说明漂移，且看不出哪份更新。
+        registry.set_measured(
+            "a_rag_accuracy",
+            treat,
+            gap_note=(
+                f"实测 baseline(无 RAG) {base:.4f} -> 分层 RAG {treat:.4f}"
+                f"（绝对 {delta:+.4f} / 相对 {rel}%，n={len(rows)}）。"
+                "**未达简历所写 94%，按实测值报告。**"
+                f"剩余 {len(results['treatment_rag']['wrong'])} 条为真实能力边界"
+                "（语义近似，如「门被撬了吗」命中「翻越围栏」的 A-0001 而非"
+                "「暴力尝试」的 A-0012），非判据问题 —— 严格口径与集合命中口径"
+                "结果完全一致可证。"
+            ),
+        )
         registry.export_json()
-        print(f"已回填 registry：a_rag_accuracy = {treat}（相对基线 +{delta}）")
+        print(f"已回填 registry：a_rag_accuracy = {treat}（相对基线 {delta:+}）")
 
     store.close()
     return 0

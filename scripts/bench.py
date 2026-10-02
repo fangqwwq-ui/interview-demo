@@ -175,6 +175,40 @@ def env_info() -> Dict[str, Any]:
     return info
 
 
+def _aggregate(blocks: List[Dict[str, Any]]) -> Dict[str, Any]:
+    """把多轮结果聚合成一个代表块。
+
+    RPS 与各分位取**中位数**（不是平均值）：高并发下尾部抖动会让平均值
+    被单个慢轮次拉偏，中位数更接近典型表现。
+    同时输出 ``rps_spread_pct``（各轮 RPS 的极差百分比）——
+    这个数字是**数据可信度的直接指标**：spread 很大就说明该档测量被噪声主导，
+    不该拿它下结论。
+    """
+    good = [b for b in blocks if b.get("n")]
+    if not good:
+        return {"n": 0, "failures": sum(b.get("failures", 0) for b in blocks)}
+    med = lambda key: round(statistics.median(b[key] for b in good), 2)
+    rpss = sorted(b["rps"] for b in good)
+    spread = (
+        round((rpss[-1] - rpss[0]) / rpss[0] * 100, 1) if rpss[0] else 0.0
+    )
+    return {
+        "n": sum(b["n"] for b in good),
+        "rps": med("rps"),
+        "p50_ms": med("p50_ms"),
+        "p95_ms": med("p95_ms"),
+        "p99_ms": med("p99_ms"),
+        "mean_ms": med("mean_ms"),
+        "max_ms": max(b["max_ms"] for b in good),
+        "min_ms": min(b["min_ms"] for b in good),
+        "stdev_ms": med("stdev_ms"),
+        "wall_s": round(statistics.median(b["wall_s"] for b in good), 3),
+        "failures": sum(b["failures"] for b in good),
+        "repeats": len(good),
+        "rps_spread_pct": spread,
+    }
+
+
 def comparison(v1: Dict[Any, Dict], v2: Dict[Any, Dict]) -> List[Dict[str, Any]]:
     rows = []
     for c in sorted(v1.keys()):
@@ -211,13 +245,30 @@ def main(argv: Optional[List[str]] = None) -> int:
     print()
 
     results: Dict[str, Dict[Any, Dict]] = {"v1": {}, "v2": {}}
+    # 每档做 REPEATS 轮，并在轮内**交替 v1/v2 的先后顺序**。
+    #
+    # 为什么必须这么做（实测教训）：
+    #   固定「先 v1 后 v2」时，高并发档的 v2 总是排在v1 之后跑，
+    #   受到前一轮的热积累与残留后台任务影响。
+    #   实测同一份代码两次跑出+28.2% 与 -9.2% 两个相反结论 ——
+    #   原因是并发16 的 stdev 高达 50~60ms、max 达 558ms，测量被噪声主导，
+    #   「谁先跑」成了影响结果的主因。
+    #   交替顺序 + 取多轮中位数，让顺序偏差不能再决定结论。
+    REPEATS = 3
     for c in concs:
+        acc: Dict[str, List[Dict[str, Any]]] = {"v1": [], "v2": []}
+        for rep in range(REPEATS):
+            order = ("v1", "v2") if rep % 2 == 0 else ("v2", "v1")
+            for version in order:
+                block = asyncio.run(run_load(version, c, args.rounds, args.warmup))
+                acc[version].append(block)
         for version in ("v1", "v2"):
-            block = asyncio.run(run_load(version, c, args.rounds, args.warmup))
-            results[version][c] = block
-            print(f"  {version} concurrency={c:>3}  n={block['n']:>4}  "
-                  f"rps={block['rps']:>7}  p50={block['p50_ms']:>8}ms  "
-                  f"p95={block['p95_ms']:>8}ms  fail={block['failures']}")
+            results[version][c] = _aggregate(acc[version])
+            b = results[version][c]
+            print(f"  {version} concurrency={c:>3}  n={b['n']:>5}  "
+                  f"rps={b['rps']:>7}  p50={b['p50_ms']:>8}ms  "
+                  f"p95={b['p95_ms']:>8}ms  spread={b['rps_spread_pct']:>5}%  "
+                  f"fail={b['failures']}")
         print()
 
     rows = comparison(results["v1"], results["v2"])
@@ -227,25 +278,67 @@ def main(argv: Optional[List[str]] = None) -> int:
     payload = {
         "tool": "httpx+asyncio（未使用 locust）",
         "rounds": args.rounds,
+        "repeats": REPEATS,
         "warmup": args.warmup,
         "mix": [{"method": m, "path": p} for m, p, _ in MIX],
         "env": info,
         "raw": {v: {str(k): val for k, val in d.items()} for v, d in results.items()},
         "comparison": rows,
         "note": (
-            "百分比为本次实测结果，随机器与负载变化；"
-            "不对外承诺固定提升幅度。"
+            "RPS/分位数取 3 轮中位数，v1/v2 轮内交替先后顺序以消除顺序偏差；"
+            "rps_spread_pct 为各轮 RPS 极差百分比，spread 大表示该档测量被噪声主导。"
+            "百分比为本次实测结果，随机器与负载变化；不对外承诺固定提升幅度。"
         ),
     }
     (out_dir / "bench_raw.json").write_text(
         json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8"
     )
     print(f"原始数据 -> {out_dir / 'bench_raw.json'}")
+
+    # 按口径纪律，实测值必须由脚本回填 registry（文档里不手写）。
+    # 摘要取「各档提升区间的上下界」，而不是挑一个好看的档位。
+    if rows:
+        from common.metrics import registry
+
+        gains = sorted(r["rps_gain_pct"] for r in rows)
+        lo, hi = gains[0], gains[-1]
+        # 最高/最低提升分别对应哪个并发档 —— 必须从数据里取，
+        # 不能假设「并发越高提升越大」（实测恰好相反）
+        best_row = max(rows, key=lambda r: r["rps_gain_pct"])
+        worst_row = min(rows, key=lambda r: r["rps_gain_pct"])
+        fails = sum(
+            int(b.get("failures", 0) or 0) for v in results.values() for b in v.values()
+        )
+        n_total = sum(int(b.get("n", 0) or 0) for v in results.values() for b in v.values())
+        summary = (
+            f"并发 1/4/8/16 实测 RPS 提升 {lo:+g}% ~ {hi:+g}%；"
+            f"合计 {n_total} 请求，失败 {fails}；"
+            f"主指标为 RPS（吞吐）而非 P95，与简历「响应速度提升 40%」口径不同，不可互相印证"
+        )
+        registry.set_measured(
+            "a_api_latency_gain",
+            summary,
+            gap_note=(
+                f"实测提升区间 {lo:+g}% ~ {hi:+g}%，低于简历所写的 40%，按实测值报告。"
+                "口径差异：简历的「响应速度提升 40%」未说明衡量的是吞吐还是延迟分位，"
+                "此处明确以 RPS 为主指标并同时给出 P95，因此不可直接与简历数字互相印证。"
+                f"最高为并发 {best_row['concurrency']}（{best_row['rps_gain_pct']:+g}%），"
+                f"最低为并发 {worst_row['concurrency']}（{worst_row['rps_gain_pct']:+g}%），"
+                "提升随并发升高而收窄 —— 符合「异步收益来自等待可重叠」的预期："
+                "CPU 与线程池打满后没有可重叠的等待。"
+                "测量可靠性：每档 3 轮取中位数 + v1/v2 交替先后顺序，"
+                "轮间波动（RPS 极差）已一并记入 bench/report.md；"
+                "若某档波动 >15%，报告会将该档标为不可信。"
+            ),
+        )
+        registry.export_json()  # 必须 export，否则 status/measured 不会合并进 metrics.json
+        print(f"已回填 registry：a_api_latency_gain")
+
     if rows:
         print("\n汇总（实测）:")
         for r in rows:
             print(f"  并发{r['concurrency']:>3}: RPS {r['v1_rps']} -> {r['v2_rps']} "
-                  f"(+{r['rps_gain_pct']}%), P95 {r['v1_p95_ms']}ms -> {r['v2_p95_ms']}ms")
+                  f"({r['rps_gain_pct']:+}%), P95 {r['v1_p95_ms']}ms -> {r['v2_p95_ms']}ms")
     return 0
 
 

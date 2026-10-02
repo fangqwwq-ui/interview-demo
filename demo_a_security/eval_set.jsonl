@@ -1,0 +1,102 @@
+{"qid": "Q001", "question": "东门夜间翻越围栏的事件是什么？", "filters": {"zone": "gate-01"}, "answer_event_ids": ["A-0001"], "forbidden_event_ids": []}
+{"qid": "Q002", "question": "东门有没有尾随进入的情况？", "filters": {"zone": "gate-01"}, "answer_event_ids": ["A-0002"], "forbidden_event_ids": []}
+{"qid": "Q003", "question": "东门的快递员事件是什么？", "filters": {"zone": "gate-01"}, "answer_event_ids": ["A-0003"], "forbidden_event_ids": []}
+{"qid": "Q004", "question": "gate-01 区域夜间翻越围栏的事件是什么？", "filters": {"zone": "gate-01"}, "answer_event_ids": ["A-0001"], "forbidden_event_ids": []}
+{"qid": "Q005", "question": "gate-01 区域有没有尾随进入的情况？", "filters": {"zone": "gate-01"}, "answer_event_ids": ["A-0002"], "forbidden_event_ids": []}
+{"qid": "Q006", "question": "gate-01 区域的快递员事件是什么？", "filters": {"zone": "gate-01"}, "answer_event_ids": ["A-0003"], "forbidden_event_ids": []}
+{"qid": "Q007", "question": "大门夜间翻越围栏的事件是什么？", "filters": {"zone": "gate-01"}, "answer_event_ids": ["A-0001"], "forbidden_event_ids": []}
+{"qid": "Q008", "question": "大门有没有尾随进入的情况？", "filters": {"zone": "gate-01"}, "answer_event_ids": ["A-0002"], "forbidden_event_ids": []}
+{"qid": "Q009", "question": "大门的快递员事件是什么？", "filters": {"zone": "gate-01"}, "answer_event_ids": ["A-0003"], "forbidden_event_ids": []}
+{"qid": "Q010", "question": "门禁尾随未登记怎么处理的？", "filters": {"zone": "gate-01"}, "answer_event_ids": ["A-0002"], "forbidden_event_ids": []}
+{"qid": "Q011", "question": "东门非工作人员闯入，危险等级多少？", "filters": {"zone": "gate-01"}, "answer_event_ids": ["A-0001"], "forbidden_event_ids": []}
+{"qid": "Q012", "question": "gate-01 有高危事件吗？", "filters": {"zone": "gate-01", "min_severity": 4}, "answer_event_ids": ["A-0001", "A-0002"], "forbidden_event_ids": []}
+{"qid": "Q013", "question": "东门哪些事件还没闭环？", "filters": {"zone": "gate-01", "open_only": true}, "answer_event_ids": [], "forbidden_event_ids": ["A-0004", "A-0006"]}
+{"qid": "Q014", "question": "东门有人闯入吗？", "filters": {"zone": "gate-01"}, "answer_event_ids": ["A-0001", "A-0002"], "forbidden_event_ids": []}
+{"qid": "Q015", "question": "西门夜间货车滞留的事件？", "filters": {"zone": "gate-02"}, "answer_event_ids": ["A-0004"], "forbidden_event_ids": []}
+{"qid": "Q016", "question": "西门白班车辆通行情况？", "filters": {"zone": "gate-02"}, "answer_event_ids": ["A-0005"], "forbidden_event_ids": []}
+{"qid": "Q017", "question": "gate-02夜间货车滞留的事件？", "filters": {"zone": "gate-02"}, "answer_event_ids": ["A-0004"], "forbidden_event_ids": []}
+{"qid": "Q018", "question": "gate-02白班车辆通行情况？", "filters": {"zone": "gate-02"}, "answer_event_ids": ["A-0005"], "forbidden_event_ids": []}
+{"qid": "Q019", "question": "货车在西门滞留的处理结果？", "filters": {}, "answer_event_ids": ["A-0004"], "forbidden_event_ids": []}
+{"qid": "Q020", "question": "西门有哪些车辆事件？", "filters": {"zone": "gate-02", "event_type": "vehicle"}, "answer_event_ids": ["A-0004", "A-0005"], "forbidden_event_ids": []}
+{"qid": "Q021", "question": "厂区仓库的烟雾告警是什么？", "filters": {"zone": "yard-02"}, "answer_event_ids": ["A-0006"], "forbidden_event_ids": []}
+{"qid": "Q022", "question": "厂区锅炉房冒烟的事件？", "filters": {"zone": "yard-02"}, "answer_event_ids": ["A-0007"], "forbidden_event_ids": []}
+{"qid": "Q023", "question": "厂区叉车作业记录？", "filters": {"zone": "yard-02"}, "answer_event_ids": ["A-0008"], "forbidden_event_ids": []}
+{"qid": "Q024", "question": "yard-02仓库的烟雾告警是什么？", "filters": {"zone": "yard-02"}, "answer_event_ids": ["A-0006"], "forbidden_event_ids": []}
+{"qid": "Q025", "question": "yard-02锅炉房冒烟的事件？", "filters": {"zone": "yard-02"}, "answer_event_ids": ["A-0007"], "forbidden_event_ids": []}
+{"qid": "Q026", "question": "yard-02叉车作业记录？", "filters": {"zone": "yard-02"}, "answer_event_ids": ["A-0008"], "forbidden_event_ids": []}
+{"qid": "Q027", "question": "厂区仓库的烟雾告警后来怎么处理的？", "filters": {}, "answer_event_ids": ["A-0006"], "forbidden_event_ids": []}
+{"qid": "Q028", "question": "焊接烟尘的那条告警最后怎么结的？", "filters": {}, "answer_event_ids": ["A-0006"], "forbidden_event_ids": []}
+{"qid": "Q029", "question": "厂区有哪些事件还没闭环？", "filters": {"zone": "yard-02", "open_only": true}, "answer_event_ids": ["A-0008"], "forbidden_event_ids": []}
+{"qid": "Q030", "question": "厂区高危事件有哪些？", "filters": {"zone": "yard-02", "min_severity": 4}, "answer_event_ids": ["A-0006", "A-0007"], "forbidden_event_ids": []}
+{"qid": "Q031", "question": "办公楼员工刷脸的记录？", "filters": {"zone": "office-03"}, "answer_event_ids": ["A-0009"], "forbidden_event_ids": []}
+{"qid": "Q032", "question": "办公楼非白名单人员进入事件？", "filters": {"zone": "office-03"}, "answer_event_ids": ["A-0010"], "forbidden_event_ids": []}
+{"qid": "Q033", "question": "办公楼夜间窗户开启的事件？", "filters": {"zone": "office-03"}, "answer_event_ids": ["A-0011"], "forbidden_event_ids": []}
+{"qid": "Q034", "question": "office-03员工刷脸的记录？", "filters": {"zone": "office-03"}, "answer_event_ids": ["A-0009"], "forbidden_event_ids": []}
+{"qid": "Q035", "question": "office-03非白名单人员进入事件？", "filters": {"zone": "office-03"}, "answer_event_ids": ["A-0010"], "forbidden_event_ids": []}
+{"qid": "Q036", "question": "office-03夜间窗户开启的事件？", "filters": {"zone": "office-03"}, "answer_event_ids": ["A-0011"], "forbidden_event_ids": []}
+{"qid": "Q037", "question": "办公楼非白名单人员进入，现在什么状态？", "filters": {}, "answer_event_ids": ["A-0010"], "forbidden_event_ids": []}
+{"qid": "Q038", "question": "办公楼的闯入类事件有哪些？", "filters": {"zone": "office-03", "event_type": "intrusion"}, "answer_event_ids": ["A-0011"], "forbidden_event_ids": []}
+{"qid": "Q039", "question": "办公楼未闭环事件有哪些？", "filters": {"zone": "office-03", "open_only": true}, "answer_event_ids": ["A-0010", "A-0011"], "forbidden_event_ids": []}
+{"qid": "Q040", "question": "仓库门禁被暴力尝试的事件？", "filters": {"zone": "depot-04"}, "answer_event_ids": ["A-0012"], "forbidden_event_ids": []}
+{"qid": "Q041", "question": "仓库车辆逆行记录？", "filters": {"zone": "depot-04"}, "answer_event_ids": ["A-0013"], "forbidden_event_ids": []}
+{"qid": "Q042", "question": "仓库管理员巡检记录？", "filters": {"zone": "depot-04"}, "answer_event_ids": ["A-0014"], "forbidden_event_ids": []}
+{"qid": "Q043", "question": "depot-04门禁被暴力尝试的事件？", "filters": {"zone": "depot-04"}, "answer_event_ids": ["A-0012"], "forbidden_event_ids": []}
+{"qid": "Q044", "question": "depot-04车辆逆行记录？", "filters": {"zone": "depot-04"}, "answer_event_ids": ["A-0013"], "forbidden_event_ids": []}
+{"qid": "Q045", "question": "depot-04管理员巡检记录？", "filters": {"zone": "depot-04"}, "answer_event_ids": ["A-0014"], "forbidden_event_ids": []}
+{"qid": "Q046", "question": "仓库门禁被暴力尝试的那条事件状态如何？", "filters": {}, "answer_event_ids": ["A-0012"], "forbidden_event_ids": []}
+{"qid": "Q047", "question": "仓库区有什么高危事件？", "filters": {"zone": "depot-04", "min_severity": 4}, "answer_event_ids": ["A-0012"], "forbidden_event_ids": []}
+{"qid": "Q048", "question": "哪些事件是误报？", "filters": {}, "answer_event_ids": ["A-0003", "A-0007"], "forbidden_event_ids": ["A-0001", "A-0012"]}
+{"qid": "Q049", "question": "最高危险等级的事件有哪些？", "filters": {"min_severity": 5}, "answer_event_ids": ["A-0001", "A-0006", "A-0012"], "forbidden_event_ids": []}
+{"qid": "Q050", "question": "全场未闭环的高危事件？", "filters": {"open_only": true, "min_severity": 4}, "answer_event_ids": ["A-0010", "A-0012"], "forbidden_event_ids": []}
+{"qid": "Q051", "question": "已闭环的事件有哪些？", "filters": {}, "answer_event_ids": ["A-0001", "A-0002", "A-0005", "A-0006", "A-0009"], "forbidden_event_ids": ["A-0010", "A-0012"]}
+{"qid": "Q052", "question": "人脸识别相关的正常记录？", "filters": {}, "answer_event_ids": ["A-0009"], "forbidden_event_ids": []}
+{"qid": "Q053", "question": "车辆逆行是在哪个区域？", "filters": {}, "answer_event_ids": ["A-0013"], "forbidden_event_ids": []}
+{"qid": "Q054", "question": "夜间发生的高危事件有哪些？", "filters": {"min_severity": 4}, "answer_event_ids": ["A-0001", "A-0002"], "forbidden_event_ids": []}
+{"qid": "Q055", "question": "东门那边现在什么情况？", "filters": {"zone": "gate-01"}, "answer_event_ids": ["A-0001", "A-0002", "A-0003"], "forbidden_event_ids": []}
+{"qid": "Q056", "question": "西门那边现在什么情况？", "filters": {"zone": "gate-02"}, "answer_event_ids": ["A-0004", "A-0005"], "forbidden_event_ids": []}
+{"qid": "Q057", "question": "厂区那边现在什么情况？", "filters": {"zone": "yard-02"}, "answer_event_ids": ["A-0006", "A-0007", "A-0008"], "forbidden_event_ids": []}
+{"qid": "Q058", "question": "办公楼那边现在什么情况？", "filters": {"zone": "office-03"}, "answer_event_ids": ["A-0009", "A-0010", "A-0011"], "forbidden_event_ids": []}
+{"qid": "Q059", "question": "仓库那边现在什么情况？", "filters": {"zone": "depot-04"}, "answer_event_ids": ["A-0012", "A-0013", "A-0014"], "forbidden_event_ids": []}
+{"qid": "Q060", "question": "有没有陌生人进来？", "filters": {"min_severity": 4}, "answer_event_ids": ["A-0001", "A-0002", "A-0010"], "forbidden_event_ids": []}
+{"qid": "Q061", "question": "着火了吗？", "filters": {}, "answer_event_ids": ["A-0006"], "forbidden_event_ids": ["A-0013"]}
+{"qid": "Q062", "question": "门被撬了吗？", "filters": {}, "answer_event_ids": ["A-0012"], "forbidden_event_ids": []}
+{"qid": "Q063", "question": "有没有车乱停乱行？", "filters": {"event_type": "vehicle"}, "answer_event_ids": ["A-0013", "A-0004"], "forbidden_event_ids": []}
+{"qid": "Q064", "question": "误报的都是些什么？", "filters": {}, "answer_event_ids": ["A-0003", "A-0007"], "forbidden_event_ids": []}
+{"qid": "Q065", "question": "还没处理完的事情？", "filters": {"open_only": true}, "answer_event_ids": ["A-0008", "A-0010", "A-0011", "A-0012", "A-0013", "A-0014"], "forbidden_event_ids": []}
+{"qid": "Q066", "question": "东门闯入事件最后怎么结的？", "filters": {}, "answer_event_ids": ["A-0001"], "forbidden_event_ids": []}
+{"qid": "Q067", "question": "仓库门禁事件的处置结论？", "filters": {}, "answer_event_ids": ["A-0012"], "forbidden_event_ids": []}
+{"qid": "Q068", "question": "快递员为什么被标记为误报？", "filters": {}, "answer_event_ids": ["A-0003"], "forbidden_event_ids": []}
+{"qid": "Q069", "question": "锅炉房冒烟最后怎么处理的？", "filters": {}, "answer_event_ids": ["A-0007"], "forbidden_event_ids": []}
+{"qid": "Q070", "question": "厂区仓库告警的处置结论是什么？", "filters": {}, "answer_event_ids": ["A-0006"], "forbidden_event_ids": []}
+{"qid": "Q071", "question": "摄像头 cam-01 记录了什么事件？", "filters": {}, "answer_event_ids": ["A-0001"], "forbidden_event_ids": []}
+{"qid": "Q072", "question": "摄像头 cam-05 记录了什么事件？", "filters": {}, "answer_event_ids": ["A-0006"], "forbidden_event_ids": []}
+{"qid": "Q073", "question": "摄像头 cam-08 记录了什么事件？", "filters": {}, "answer_event_ids": ["A-0010"], "forbidden_event_ids": []}
+{"qid": "Q074", "question": "哪些事件经历了确认和处置流程？", "filters": {"zone": "gate-01"}, "answer_event_ids": ["A-0001", "A-0002", "A-0004", "A-0006"], "forbidden_event_ids": ["A-0010"]}
+{"qid": "Q075", "question": "东门有人闯入吗", "filters": {"zone": "gate-01", "event_type": "intrusion"}, "answer_event_ids": ["A-0001", "A-0002"], "forbidden_event_ids": []}
+{"qid": "Q076", "question": "东门的入侵事件有哪些", "filters": {"zone": "gate-01", "event_type": "intrusion"}, "answer_event_ids": ["A-0001", "A-0002"], "forbidden_event_ids": []}
+{"qid": "Q077", "question": "西门有入侵事件吗", "filters": {"zone": "gate-02", "event_type": "intrusion"}, "answer_event_ids": [], "forbidden_event_ids": []}
+{"qid": "Q078", "question": "西门车辆事件有哪些", "filters": {"zone": "gate-02", "event_type": "vehicle"}, "answer_event_ids": ["A-0004", "A-0005"], "forbidden_event_ids": []}
+{"qid": "Q079", "question": "厂区火灾告警是什么", "filters": {"zone": "yard-02", "event_type": "fire"}, "answer_event_ids": ["A-0006"], "forbidden_event_ids": []}
+{"qid": "Q080", "question": "厂区烟雾类事件", "filters": {"zone": "yard-02", "event_type": "smoke"}, "answer_event_ids": ["A-0007"], "forbidden_event_ids": []}
+{"qid": "Q081", "question": "厂区车辆事件", "filters": {"zone": "yard-02", "event_type": "vehicle"}, "answer_event_ids": ["A-0008"], "forbidden_event_ids": []}
+{"qid": "Q082", "question": "办公楼入侵事件", "filters": {"zone": "office-03", "event_type": "intrusion"}, "answer_event_ids": ["A-0011"], "forbidden_event_ids": []}
+{"qid": "Q083", "question": "办公楼人员事件", "filters": {"zone": "office-03", "event_type": "person"}, "answer_event_ids": ["A-0009", "A-0010"], "forbidden_event_ids": []}
+{"qid": "Q084", "question": "仓库入侵事件有哪些", "filters": {"zone": "depot-04", "event_type": "intrusion"}, "answer_event_ids": ["A-0012"], "forbidden_event_ids": []}
+{"qid": "Q085", "question": "仓库人员事件", "filters": {"zone": "depot-04", "event_type": "person"}, "answer_event_ids": ["A-0014"], "forbidden_event_ids": []}
+{"qid": "Q086", "question": "仓库车辆事件", "filters": {"zone": "depot-04", "event_type": "vehicle"}, "answer_event_ids": ["A-0013"], "forbidden_event_ids": []}
+{"qid": "Q087", "question": "危险等级不低于 1 的事件有哪些？", "filters": {"min_severity": 1}, "answer_event_ids": ["A-0001", "A-0002", "A-0003", "A-0004", "A-0005", "A-0006", "A-0007", "A-0008", "A-0009", "A-0010", "A-0011", "A-0012", "A-0013", "A-0014"], "forbidden_event_ids": []}
+{"qid": "Q088", "question": "危险等级不低于 2 的事件有哪些？", "filters": {"min_severity": 2}, "answer_event_ids": ["A-0001", "A-0002", "A-0004", "A-0006", "A-0007", "A-0009", "A-0010", "A-0011", "A-0012", "A-0013", "A-0014"], "forbidden_event_ids": []}
+{"qid": "Q089", "question": "危险等级不低于 3 的事件有哪些？", "filters": {"min_severity": 3}, "answer_event_ids": ["A-0001", "A-0002", "A-0004", "A-0006", "A-0007", "A-0010", "A-0011", "A-0012", "A-0013"], "forbidden_event_ids": []}
+{"qid": "Q090", "question": "危险等级不低于 4 的事件有哪些？", "filters": {"min_severity": 4}, "answer_event_ids": ["A-0001", "A-0002", "A-0006", "A-0007", "A-0010", "A-0012"], "forbidden_event_ids": []}
+{"qid": "Q091", "question": "危险等级不低于 5 的事件有哪些？", "filters": {"min_severity": 5}, "answer_event_ids": ["A-0001", "A-0006", "A-0012"], "forbidden_event_ids": []}
+{"qid": "Q092", "question": "高危事件清单", "filters": {"min_severity": 4}, "answer_event_ids": ["A-0001", "A-0002", "A-0006", "A-0007", "A-0010", "A-0012"], "forbidden_event_ids": []}
+{"qid": "Q093", "question": "严重事件有哪些", "filters": {"min_severity": 3}, "answer_event_ids": ["A-0001", "A-0002", "A-0004", "A-0006", "A-0007", "A-0010", "A-0011", "A-0012", "A-0013"], "forbidden_event_ids": []}
+{"qid": "Q094", "question": "轻微事件", "filters": {"min_severity": 1}, "answer_event_ids": ["A-0001", "A-0002", "A-0003", "A-0004", "A-0005", "A-0006", "A-0007", "A-0008", "A-0009", "A-0010", "A-0011", "A-0012", "A-0013", "A-0014"], "forbidden_event_ids": []}
+{"qid": "Q095", "question": "东门已闭环的事件", "filters": {"zone": "gate-01"}, "answer_event_ids": ["A-0001", "A-0002"], "forbidden_event_ids": []}
+{"qid": "Q096", "question": "厂区已处置的事件", "filters": {"zone": "yard-02"}, "answer_event_ids": ["A-0006"], "forbidden_event_ids": []}
+{"qid": "Q097", "question": "办公楼高危事件", "filters": {"zone": "office-03", "min_severity": 4}, "answer_event_ids": ["A-0010"], "forbidden_event_ids": []}
+{"qid": "Q098", "question": "仓库低危事件", "filters": {"zone": "depot-04", "min_severity": 2}, "answer_event_ids": ["A-0014"], "forbidden_event_ids": []}
+{"qid": "Q099", "question": "西门夜间事件", "filters": {"zone": "gate-02", "min_severity": 3}, "answer_event_ids": ["A-0004"], "forbidden_event_ids": []}
+{"qid": "Q100", "question": "已处置但未关闭的事件有哪些？", "filters": {"zone": "gate-02"}, "answer_event_ids": ["A-0004"], "forbidden_event_ids": []}
+{"qid": "Q101", "question": "哪些是误报需要复核？", "filters": {}, "answer_event_ids": ["A-0003", "A-0007"], "forbidden_event_ids": []}
+{"qid": "Q102", "question": "需要人工复核的高危事件？", "filters": {"open_only": true, "min_severity": 4}, "answer_event_ids": ["A-0001", "A-0006", "A-0010", "A-0012"], "forbidden_event_ids": []}

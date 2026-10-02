@@ -133,30 +133,52 @@ METRICS: List[MetricEntry] = [
     # ---------------- Demo A ----------------
     MetricEntry(
         key="a_rag_accuracy",
-        name="RAG 问答准确率",
+        name="RAG 检索命中率（top-1 精确命中）",
         resume_claim="智能应答准确率 72% → 94%",
-        definition="评测集上答案与标准答案一致的条目占比",
-        formula="正确条数 / 评测集总条数",
-        dataset="≥100 条自建问答评测集（demo_a_security/rag/eval_set.jsonl）",
-        script="demo_a_security/rag/evaluate.py",
-        instrument="自研评测脚本",
+        definition=(
+            "评测集上 top-1 检索结果落在标注答案集合内且不在 forbidden 集合内的比例；"
+            "本Demo 不含 LLM 生成环节，衡量的是「检索是否取到正确工单」，"
+            "不等同于端到端生成准确率"
+        ),
+        formula="correct / n（n=102；无标注答案的条目计入分母，考「该说没有时不说有」）",
+        dataset="demo_a_security/eval_set.jsonl（102 条自建，人工撰写，未爬取）",
+        script="demo_a_security/evaluate.py",
+        instrument="bge-small-zh-v1.5(dim512) + FAISS IndexFlatIP + 分层结构化过滤",
         provenance="self-built",
         status="pending",
-        gap_note="以实测值为准；若达不到 94%，按实测值写并在本页说明差异原因。",
+        gap_note=(
+            "实测 baseline(无 RAG) 0.7647 -> 分层 RAG 0.9118（绝对 +14.7pp / 相对 +19.2%）。"
+            "**未达简历所写 94%，按实测值报告。**"
+            "剩余 9 条失败为真实能力边界（语义近似，如「门被撬了吗」命中"
+            "「翻越围栏」的 A-0001 而非「暴力尝试」的 A-0012），非判据问题 —— "
+            "严格口径与集合命中口径结果完全一致（均 0.9118）可证。"
+        ),
         tags=["demo-a", "rag"],
     ),
     MetricEntry(
         key="a_api_latency_gain",
-        name="接口响应提升幅度",
+        name="接口吞吐提升幅度（v1 同步 vs v2 异步并发）",
         resume_claim="接口响应速度提升 40%",
-        definition="同一接口优化前后在相同压测条件下的 P95 延迟改善比例",
-        formula="(P95_before - P95_after) / P95_before",
-        dataset="locust 压测结果（demo_a_security/bench/report.md）",
-        script="demo_a_security/bench/locustfile.py",
-        instrument="locust",
+        definition=(
+            "同机、同库、同流量配比下，v2（异步并发+线程池每线程独立连接）"
+            "相对 v1（同步阻塞+每请求新建连接）的 RPS 提升比例；"
+            "分并发档位单独报告，不做跨档平均"
+        ),
+        formula="(RPS_v2 - RPS_v1) / RPS_v1，按 concurrency ∈ {1,4,8,16} 分档",
+        dataset="outputs/demo_a/bench/bench_raw.json（httpx+asyncio 压测，非 locust）",
+        script="scripts/bench.py",
+        instrument=(
+            "httpx 0.28.1 + asyncio（零新增依赖；locust 含 gevent，"
+            "本机带宽约 340 KB/s 不值得为单个数字引入）"
+        ),
         provenance="self-built",
         status="pending",
-        gap_note="优化前版本为「同步串行调用」，优化后为「异步并发 + 连接池」，同机压测。",
+        gap_note=(
+            "实测提升区间 13%–28%，低于简历所写的 40%；按实测值报告。"
+            "口径差异：简历的「响应速度提升 40%」未说明衡量的是吞吐还是延迟分位，"
+            "此处明确以 RPS 为主指标并同时给出 P95，"
+            "因此不可直接与简历数字互相印证。"
+        ),
         tags=["demo-a", "performance"],
     ),
     # ---------------- Demo C ----------------

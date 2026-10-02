@@ -27,5 +27,13 @@ demo_b_copywriting/data/clean/*
 demo_b_copywriting/data/index/*
 !demo_b_copywriting/data/index/.gitkeep
 
+# Demo A 同理，区分「源数据」与「确定性产物」：
+#   eval_set.jsonl —— 人工撰写的评测集，是整个准确率指标的输入。**必须入库**，
+#                    否则 a_rag_accuracy 无法在clone 后复现。
+#   data/demo_a/index/ —— 由 rag.build() 从工单库确定性重建（FAISS 索引 +
+#                    meta），且与编码器强绑定，不入库以避免"两份真相"。
+data/demo_a/index/*
+!data/demo_a/index/.gitkeep
+
 # 引入的第三方组件不带其 git 历史
 third_party/humanize-chinese/.git/

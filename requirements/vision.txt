@@ -21,17 +21,25 @@
 
 # GPU 推理运行时（必须最后装）
 #
-# ⚠️ 版本必须锁 <= 1.26.x，**不要用 >= 1.27**。原因（官方文档实测核对）：
-#     onnxruntime ≥ 1.27 的 PyPI 默认包改为 **CUDA 13.0** 构建，
-#     依赖 cublasLt64_13.dll / cudart64_13.dll；
-#     ≤ 1.26.x 才是 CUDA 12.8 构建，依赖 _12 系列。
-#   本机只装了 NVIDIA 驱动，**没有 CUDA Toolkit**，
-#   但 D:\ComfyUI 的 torch 2.7.0+cu128 自带完整 CUDA 12.8 运行时
-#   （cublasLt64_12 / cudart64_12 / cudnn64_9等）。
-#   装<= 1.26 即可**只读复用**那套 DLL，无需3~5 GB 的 Toolkit 下载。
-#   若误装 >= 1.27，会报`cublasLt64_13.dllwhich is missing`，
-#   而 ORT **不抛异常，只是静默降级到 CPU** —— 很容易被误认为「GPU 可用」。
-onnxruntime-gpu==1.26.0
+# ⚠️ 版本经「查轮子 + 查文档」双重确认，不可随意改：
+#
+#   1) Python 版本约束（更硬）：本项目 venv 是 **Python 3.13**，
+#      而 onnxruntime-gpu 的 **cp313 轮子只存在于 1.20.0 / 1.20.2**；
+#      1.21~1.26 只有 cp310/311/312（无 cp313），1.27+ 才有 cp313。
+#
+#   2) CUDA 主版本绑定：onnxruntime >= 1.27 是 **CUDA 13** 构建
+#      （要 cublasLt64_13.dll），<= 1.26 是 **CUDA 12.8**（要 _12）。
+#      本机只装了 NVIDIA 驱动、没有 CUDA Toolkit，但
+#      D:\ComfyUI 的 torch 2.7.0+cu128 自带完整 CUDA 12.8 运行时，
+#      所以必须用 CUDA 12 构建，**只读复用**那套DLL，无需几 GB 的 Toolkit。
+#
+#   两条约束相交（cp313 ∩ CUDA12）→ **唯一可用版本是 1.20.2**。
+#   （初版误写 1.26.0，装的时候才报错「无 cp313 轮子」—— 版本假设必须先查轮子。）
+#
+#   3) ORT 在 CUDA 缺依赖时**不抛异常，只静默降级 CPU**，
+#      而 get_available_providers() 依然列出 CUDAExecutionProvider。
+#      只看那份清单会误判成「GPU 可用」，必须用 Session.get_providers() 判定。
+onnxruntime-gpu==1.20.2
 
 # 图像与数值
 opencv-python-headless>=4.10

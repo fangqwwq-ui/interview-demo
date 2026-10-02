@@ -62,15 +62,17 @@ from typing import List, Tuple
 ROOT = Path(__file__).resolve().parent.parent
 PY = ROOT / ".venv" / "Scripts" / "python.exe"
 
-# GPU 推理运行时的**锁定版本**，不能写 >= 1.27。
-#
-# 官方文档（onnxruntime.ai CUDA-ExecutionProvider#requirements，已实测核对）：
-#   onnxruntime >= 1.27 的 PyPI 默认包构建于 CUDA 13.0，依赖 cublasLt64_13.dll；
-#   <= 1.26.x 构建于 CUDA 12.8，依赖 cublasLt64_12.dll。
-# 本机没有 CUDA Toolkit（只有驱动），但 D:\ComfyUI 的 torch 2.7.0+cu128
-# 自带完整 CUDA 12.8 运行时，因此必须锁 <= 1.26 才能复用那套 DLL。
-# 装成 >= 1.27 会静默降级到 CPU（ORT 不抛异常），看起来「能用」但其实没上 GPU。
-ORT_PINNED = "onnxruntime-gpu==1.26.0"
+# GPU 推理运行时的**锁定版本**。这是两条约束相交后的唯一解，改之前先查轮子：
+#   (a) 本项目 venv 是 Python 3.13，而 onnxruntime-gpu 的 **cp313 轮子
+#       只存在于 1.20.0 / 1.20.2**；1.21~1.26 只有 cp310/311/312。
+#   (b) ORT >= 1.27 是 **CUDA 13** 构建（要 cublasLt64_13.dll），
+#       <= 1.26 是 **CUDA 12.8**（要 _12）。本机只有 ComfyUI 带的
+#       CUDA 12.8 运行时（D:\ComfyUI\venv\...\torch\lib），
+#       所以必须用 CUDA 12 构建。
+#   (a) ∩ (b) = 1.20.2。
+#   初版误写 1.26.0，装的时候才报「无 cp313 轮子」—— 版本假设必须先查轮子，
+#   不能只看官方文档的 CUDA 版本表。
+ORT_PINNED = "onnxruntime-gpu==1.20.2"
 
 # 本机唯一可用的 pip 源（清华源不可用）
 INDEX = "https://mirrors.aliyun.com/pypi/simple/"

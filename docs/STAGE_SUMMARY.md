@@ -6,6 +6,25 @@
 
 ---
 
+## 〇、交付物清单（面试直接可用）
+
+| 文件 | 用途 |
+|---|---|
+| `docs/demo_script_A.md` | Demo A 讲稿：30 秒开场、架构图、3 分钟演示动线、2 个工程决策深讲、2 个踩坑、6 条局限 |
+| `docs/demo_script_B.md` | Demo B 讲稿：主打「我证明了检测器在什么条件下失效」 |
+| `docs/demo_script_C.md` | Demo C 讲稿：主打「零改动接入」+「主动推翻自己的假设」 |
+| `docs/objections.md` | **15 条追问应答**，分 6 类，每条给 30 秒答法 + 证据位置 + 数据速查表 + 临场应急话术 |
+| `docs/STAGE_SUMMARY.md` | 本文件：总体进度、实测指标、缺陷复盘、复现命令 |
+| `portal/measurements.json` | **精确值唯一出处**（含 `measured_at` 时间戳）|
+| `bench/report.md` | 压测对照报告（脚本生成，数字不可手改）|
+
+> ⚠️ **讲稿里的耗时用区间表述**（如「约 7~8 ms」），精确值以 `portal/measurements.json`
+> 为准 —— 因为实测有 GPU 抖动（6.9~9.7 ms），写死一个值会出现
+> 「现场跑出 7.71 而文档写 7.39」的尴尬。
+> `scripts/check_docs_numbers.py` 会自动校验两者一致性（容差 15%）。
+
+---
+
 ## 一、总体进度
 
 | Demo | 主题 | 状态 | 说明 |
@@ -103,8 +122,8 @@
 
 | 优先级 | 事项 | 说明 |
 |---|---|---|
-| P0 | `docs/demo_script_{A,B,C}.md` | 三个 Demo 的讲稿 |
-| P0 | `docs/objections.md` | 面试追问应答底稿（覆盖本轮全部缺陷的追问路径） |
+| ~~P0~~ | ~~`docs/demo_script_{A,B,C}.md`~~ | ✅ 已完成 |
+| ~~P0~~ | ~~`docs/objections.md`~~ | ✅ 已完成（15 条追问 + 数据速查表）|
 | P1 | **真人录音验证** | 当前 ASR 用 TTS 合成语音，**识别率偏高**。有真人录音后应重测，这也是面试时最可能被追问的边界 |
 | P1 | `docs/recording_checklist.md` | 录屏清单 |
 | P1 | InsightFace 人脸识别实测 | 已装未跑通（需 buffalo_l 权重，同样走 ModelScope）|

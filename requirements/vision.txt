@@ -1,9 +1,51 @@
-# 视觉与语音推理（Demo A 专用）
-# IMPORTANT: torch / torchvision 不在此文件。
-# RTX 5070 Laptop 为 Blackwell 架构（sm_120），必须装 cu128 轮子：
-#   pip install torch torchvision --index-url https://download.pytorch.org/whl/cu128
-# 由 scripts/bootstrap_env.ps1 自动处理。
-ultralytics>=8.3
+# Demo A 视觉与语音推理（ONNX 全栈）
+#
+# ⚠️ 本文件**不含 torch / torchvision / ultralytics**，与旧版不同。
+#
+# 原因（本项目实测结论，勿轻易改回）：
+#   本机阿里云镜像带宽约 343 KB/s，torch 2.7.0+cu128 + torchvision 约 2.7 GB
+#   → 约 137 分钟。而 Demo A 的三个模型都不需要 torch：
+#     YOLO11n-> onnxruntime-gpu（官方 onnx 权重，仅 10.42 MiB）
+#     InsightFace   -> onnxruntime-gpu
+#     faster-whisper -> CTranslate2（自带 CUDA）
+#   合计约 500 MB。已实测本机 CUDAExecutionProvider 可用（device=GPU）。
+#
+# 安装请用一键脚本（它包含三个必须遵守的顺序约束）：
+#     python scripts/setup_demo_a_vision.py
+# 直接 pip install 本文件会踩以下坑：
+#   1) insightface 无条件依赖 CPU 版 onnxruntime，会覆盖 GPU 版；
+#   2) faster-whisper 同样会拉 CPU 版 onnxruntime 再覆盖一次；
+#   3) 本机沙箱守卫会拦截 uninstall / --force-reinstall，**无法靠重装修复**。
+# 因此 insightface 与 faster-whisper 一律用 --no-deps 装，
+# 且 onnxruntime-gpu 必须最后安装。
+
+# GPU 推理运行时（必须最后装）
+#
+# ⚠️ 版本必须锁 <= 1.26.x，**不要用 >= 1.27**。原因（官方文档实测核对）：
+#     onnxruntime ≥ 1.27 的 PyPI 默认包改为 **CUDA 13.0** 构建，
+#     依赖 cublasLt64_13.dll / cudart64_13.dll；
+#     ≤ 1.26.x 才是 CUDA 12.8 构建，依赖 _12 系列。
+#   本机只装了 NVIDIA 驱动，**没有 CUDA Toolkit**，
+#   但 D:\ComfyUI 的 torch 2.7.0+cu128 自带完整 CUDA 12.8 运行时
+#   （cublasLt64_12 / cudart64_12 / cudnn64_9等）。
+#   装<= 1.26 即可**只读复用**那套 DLL，无需3~5 GB 的 Toolkit 下载。
+#   若误装 >= 1.27，会报`cublasLt64_13.dllwhich is missing`，
+#   而 ORT **不抛异常，只是静默降级到 CPU** —— 很容易被误认为「GPU 可用」。
+onnxruntime-gpu==1.26.0
+
+# 图像与数值
+opencv-python-headless>=4.10
+numpy>=2.0
+
+# 人脸识别（insightface 本体用 --no-deps 装，见脚本）
 insightface>=0.7.3
-opencv-python>=4.10
-onnxruntime-gpu>=1.18
+onnx>=1.13
+scikit-image>=0.22
+
+# 语音识别（faster-whisper 本体用 --no-deps 装，见脚本）
+faster-whisper>=1.0
+ctranslate2>=4.5
+av>=12.0
+
+# 注：huggingface_hub / tokenizers 是 faster-whisper 的依赖，
+# 由脚本在 --no-deps 之后手动补装，刻意不在此列。

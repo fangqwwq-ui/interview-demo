@@ -62,17 +62,20 @@ from typing import List, Tuple
 ROOT = Path(__file__).resolve().parent.parent
 PY = ROOT / ".venv" / "Scripts" / "python.exe"
 
-# GPU 推理运行时的**锁定版本**。这是两条约束相交后的唯一解，改之前先查轮子：
-#   (a) 本项目 venv 是 Python 3.13，而 onnxruntime-gpu 的 **cp313 轮子
-#       只存在于 1.20.0 / 1.20.2**；1.21~1.26 只有 cp310/311/312。
-#   (b) ORT >= 1.27 是 **CUDA 13** 构建（要 cublasLt64_13.dll），
-#       <= 1.26 是 **CUDA 12.8**（要 _12）。本机只有 ComfyUI 带的
-#       CUDA 12.8 运行时（D:\ComfyUI\venv\...\torch\lib），
-#       所以必须用 CUDA 12 构建。
-#   (a) ∩ (b) = 1.20.2。
-#   初版误写 1.26.0，装的时候才报「无 cp313 轮子」—— 版本假设必须先查轮子，
-#   不能只看官方文档的 CUDA 版本表。
-ORT_PINNED = "onnxruntime-gpu==1.20.2"
+# GPU 推理运行时的**锁定版本**（实测确定，不是推测）：
+#   本机没有 CUDA Toolkit（只有驱动），但 D:\ComfyUI 的 torch 2.7.0+cu128
+#   自带完整 CUDA 12.8 运行时。1.26.0 + 只读复用那套 DLL → **CUDA 真实生效**
+#   （实测 providers 含 CUDAExecutionProvider、is_fallback=False、
+#     YOLO11n 推理 20.6 ms）。
+#   ≥ 1.27 是 CUDA 13 构建（要 cublasLt64_13.dll），会报缺 DLL 并**静默降级 CPU**。
+#
+#   ⚠️ 判断纪律（本项目栽过两次）：
+#   - 不要只查官方文档的 CUDA 版本表就下结论；
+#   - 也不要只查 simple 页面的轮子列表 —— 列表显示 1.21~1.26 无 cp313，
+#     但**实测 1.26.0 装得上且 CUDA 正常**。
+#   终究要以「装上去 + 用真实推理会话验证 Session.get_providers()」为准，
+#   不能以任何「清单/表格」为准。
+ORT_PINNED = "onnxruntime-gpu==1.26.0"
 
 # 本机唯一可用的 pip 源（清华源不可用）
 INDEX = "https://mirrors.aliyun.com/pypi/simple/"
@@ -131,6 +134,15 @@ def check(verbose: bool = True) -> dict:
         except Exception:
             state[m] = False
 
+    # ⚠️ 必须把项目根加入 sys.path，否则 `python scripts\setup_demo_a_vision.py`
+    # 运行时 sys.path[0] 是 scripts/，import demo_a_security 会失败。
+    # 这个 bug 曾让「真实会话验证」静默失败，进而让 except 分支去信
+    # 那份不可信的 available 清单 —— 一个小疏忽叠加成假绿灯。
+    import sys as _sys
+
+    if str(ROOT) not in _sys.path:
+        _sys.path.insert(0, str(ROOT))
+
     providers: List[str] = []
     cuda_available = False
     if state.get("onnxruntime"):
@@ -147,23 +159,30 @@ def check(verbose: bool = True) -> dict:
         # 只是静默回退 CPU**，而 get_available_providers() 依然列出
         # CUDAExecutionProvider —— 只看它会报出假绿灯。
         # 本项目已经因此误报过一次「CUDA 可用」。
-        try:
-            import onnx as _onnx  # noqa: F401
-
-            model = ROOT / "models" / "demo_a" / "yolo11n.onnx"
-            if model.exists():
+        #
+        # ⚠️⚠️ 验证失败时**绝不能**回退到那份不可信的清单。
+        # 早期版本在 except 分支里写
+        #     cuda_available = "CUDAExecutionProvider" in providers
+        # 结果真实会话抛异常时，报告依然显示「CUDA 可用：是」——
+        # 正是本模块要防的那种假绿灯，却自己犯了一次。
+        # 正确做法：验证不通过 = 不确定 = 按不可用报，并给出原因。
+        model = ROOT / "models" / "demo_a" / "yolo11n.onnx"
+        if not model.exists():
+            cuda_available = False
+            state["verified_by"] = "未验证（权重缺失）"
+            state["verify_error"] = f"模型权重不存在：{model}"
+        else:
+            try:
                 from demo_a_security.vision import YoloDetector
 
                 det = YoloDetector()
                 providers = list(det.info.providers)
                 cuda_available = det.info.is_fallback is False
-                state["verified_by"] = "真实推理会话"
-            else:
-                cuda_available = "CUDAExecutionProvider" in providers
-                state["verified_by"] = "仅 available（权重缺失，未做会话验证）"
-        except Exception as exc:  # noqa: BLE001
-            state["verify_error"] = f"{type(exc).__name__}: {exc}"
-            cuda_available = "CUDAExecutionProvider" in providers
+                state["verified_by"] = "真实推理会话（YoloDetector）"
+            except Exception as exc:  # noqa: BLE001
+                cuda_available = False
+                state["verified_by"] = "真实推理会话失败"
+                state["verify_error"] = f"{type(exc).__name__}: {exc}"
 
     state["providers"] = providers
     state["cuda_available"] = cuda_available
@@ -175,6 +194,8 @@ def check(verbose: bool = True) -> dict:
         print(f"onnxruntime 版本：{state.get('ort_version', '—')}")
         print(f"实际 providers：{providers or '—'}")
         print(f"验证方式：{state.get('verified_by', '—')}")
+        if state.get("verify_error"):
+            print(f"验证错误：{state['verify_error'][:150]}")
         print(f"CUDA 可用：{'是' if cuda_available else '否'}")
         if not state.get("onnxruntime"):
             print()
@@ -231,28 +252,45 @@ def reset_ort() -> int:
 
 
 def download_weights() -> None:
-    """下载 YOLO11n 官方 ONNX 权重（10.42 MiB）。
+    """下载两个模型的权重。
 
-    为什么不用 ultralytics 的 .pt：.pt 需要 torch 才能导出/加载，
-    而 YOLO11n 官方直接提供 onnx，可被 onnxruntime 直接消费。
+    ① YOLO11n ONNX —— 官方 GitHub 资产，10.42 MiB，直连即可。
+    ② faster-whisper —— 走 **ModelScope**，理由见 demo_a_security/asr.py：
+       本机 huggingface.co 不可达；hf-mirror 虽能访问 API 与小文件，
+       但**大文件会 302 到海外 xet CDN**，跟随重定向即SSL 超时。
+       ModelScope 实测 9.5 MB/s 且支持 Range 断点续传。
     """
     import urllib.request
 
+    # --- ① YOLO11n ONNX ---
     url = ("https://github.com/ultralytics/assets/releases/download/"
            "v8.3.0/yolo11n.onnx")
     out_dir = ROOT / "models" / "demo_a"
     out_dir.mkdir(parents=True, exist_ok=True)
     out = out_dir / "yolo11n.onnx"
     if out.exists() and out.stat().st_size > 1_000_000:
-        print(f"\n权重已存在：{out}（{out.stat().st_size/1048576:.2f} MiB）")
-        return
-    print(f"\n下载 YOLO11n ONNX 权重 -> {out}")
+        print(f"\nYOLO 权重已存在：{out}（{out.stat().st_size/1048576:.2f} MiB）")
+    else:
+        print(f"\n下载 YOLO11n ONNX 权重 -> {out}")
+        try:
+            urllib.request.urlretrieve(url, out)
+            print(f"  完成：{out.stat().st_size/1048576:.2f} MiB")
+        except Exception as exc:
+            print(f"  失败：{type(exc).__name__}: {exc}")
+            print(f"  可手动下载后放到该路径：{url}")
+
+    # --- ② faster-whisper（ModelScope 源）---
+    print("\n下载 faster-whisper 权重（ModelScope 源）...")
     try:
-        urllib.request.urlretrieve(url, out)
-        print(f"  完成：{out.stat().st_size/1048576:.2f} MiB")
+        import sys
+
+        sys.path.insert(0, str(ROOT))
+        from demo_a_security.asr import fetch_weights
+
+        d = fetch_weights("tiny", ROOT / "models" / "faster-whisper" / "tiny")
+        print(f"  完成：{d}")
     except Exception as exc:
         print(f"  失败：{type(exc).__name__}: {exc}")
-        print(f"  可手动下载后放到该路径：{url}")
 
 
 def main(argv: List[str] | None = None) -> int:

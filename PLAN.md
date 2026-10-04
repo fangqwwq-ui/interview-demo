@@ -560,8 +560,9 @@ ASR 侧 `ASRHandle.close()` 是刻意保留的：CTranslate2 会持有 CUDA 上�
       LLM 通道代码就绪但**当前无 Key/无本地模型，未执行**，报告如实标 n/a 而不估算
 - [x] **效率对比表（本次新增）**：人工基线 vs 流水线实测，含各阶段耗时
       —— 见 §8.5；实测覆盖 1/4 阶段，未覆盖阶段留空
-- [ ] 既有能力验证：`/run` 中断后重跑可跳过已完成步骤（**验证既有能力，不作为自研声明**）
-      —— ⏳ 服务已可启动（见 §8.7 重启命令），该项待执行
+  - [x] 既有能力验证：`/run` 中断后重跑可跳过已完成步骤（**验证既有能力，不作为自研声明**）
+      —— 2026-10-02 实测：任务 `17300d64b46f` reset→`--task` 后，5 张图 + 5 段音频全部「已有图/已有台词，跳过」，仅重跑合成（14.0s）；HTTP `/run` 同 task_id 重跑 24.09s→13.06s。
+      本机 ComfyUI 因会话内网络被拦（manager 启动下载卡死）未起，本次用占位图链路验证状态机（图像源无关）；真实出图路径见 `e7046afba61a`/`78c80dba8b74`。
 - [x] `E:\aigc-comic` 源码未被修改（工作区无新增改动）
       —— 复核：端到端跑通时**仅传环境变量** `SD_API_URL=http://127.0.0.1:7860`，未改其一行代码
 
@@ -927,7 +928,7 @@ FastAPI 单页应用，提供：
 - [ ] Demo A：YOLO11n + InsightFace + faster-whisper + RAG + MCP Server + locust 压测
       （需 CUDA 版 torch，2.6 GB，**已改为 `pip download` 方式后台预取**，
       避免与当前 venv 安装冲突；下载目录 `outputs/wheels`）
-- [ ] Demo 讲稿、答辩话术、录屏清单（`docs/` 下三个文件，尚未开始）
+- [x] Demo 讲稿、答辩话术、录屏清单：`docs/demo_script_A.md` `demo_script_B.md` `demo_script_C.md`（讲稿）、`docs/objections.md`（追问应答）、`docs/demo_runbook_p5.md` + `docs/recording_shotlist.xlsx`（录屏 runbook + 分镜表，14 镜）
 
 
 > 本文档随实施迭代更新；任何口径调整必须同步更新第 4 节与第 12 节。

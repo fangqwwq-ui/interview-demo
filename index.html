@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>面试 Demo 集 · 多模态 AIGC 工具链（技术验证版）</title>
+<style>
+  :root{
+    --bg:#ffffff; --fg:#1f2430; --muted:#5b6472; --line:#e6e9ef;
+    --brand:#1f4e78; --brand2:#2e7d9a; --soft:#f4f7fb; --warn:#8a5a00; --warnbg:#fff7e6;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+       color:var(--fg);background:var(--bg);line-height:1.7;}
+  .wrap{max-width:920px;margin:0 auto;padding:32px 20px 64px;}
+  header.hero{border-bottom:3px solid var(--brand);padding-bottom:20px;margin-bottom:28px;}
+  .tag{display:inline-block;background:var(--soft);color:var(--brand);border:1px solid var(--line);
+       padding:3px 10px;border-radius:999px;font-size:13px;margin-bottom:12px;}
+  h1{font-size:30px;margin:6px 0 8px;letter-spacing:.5px;}
+  h2{font-size:21px;margin:40px 0 14px;padding-left:10px;border-left:4px solid var(--brand);}
+  h3{font-size:16px;margin:0 0 6px;}
+  p{color:var(--muted);}
+  .lead{font-size:16px;color:var(--fg);}
+  .cards{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+  .card{border:1px solid var(--line);border-radius:12px;padding:16px 18px;background:var(--soft);}
+  .card .k{font-size:13px;color:var(--brand2);font-weight:600;letter-spacing:1px;}
+  .card p{margin:6px 0 0;font-size:14px;}
+  .arch{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:10px 0;}
+  .box{border:1px solid var(--line);border-radius:8px;padding:10px 14px;background:#fff;font-size:14px;}
+  .arrow{color:var(--muted);}
+  .note{border:1px solid var(--warn);background:var(--warnbg);border-radius:10px;padding:14px 16px;font-size:14px;color:#5a3d00;}
+  .note b{color:var(--warn);}
+  .media{border:1px dashed var(--line);border-radius:10px;padding:18px;text-align:center;color:var(--muted);font-size:14px;}
+  pre{background:#0f172a;color:#e2e8f0;padding:14px 16px;border-radius:10px;overflow:auto;font-size:13px;}
+  code{background:var(--soft);padding:1px 6px;border-radius:5px;font-size:13px;}
+  footer{margin-top:48px;border-top:1px solid var(--line);padding-top:16px;font-size:13px;color:var(--muted);}
+  a{color:var(--brand);}
+  @media (max-width:640px){.cards{grid-template-columns:1fr;}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="hero">
+    <span class="tag">技术验证版 · 简历作品集</span>
+    <h1>多模态 AIGC 工具链 · 面试 Demo 集</h1>
+    <p class="lead">把简历里写到的多项 AIGC / 多模态能力，用可运行、可复现的代码复现为四个演示模块，并统一到带「指标口径页」的门户里。每个性能数字都能指出定义、公式、数据集与计算脚本——实测达不到简历值的，按实测报，不凑数。</p>
+  </header>
+
+  <h2>你能在这里看到什么</h2>
+  <p>这是一份<b>可验证的技术作品</b>，不是概念 PPT。四个模块分别复现了「安防智能体」「文案去 AI 味」「漫剧自动生产」「指标口径门户」四类能力；点开仓库里的演示录屏，能直接看到它们跑起来的样子。</p>
+
+  <h2>四个演示模块</h2>
+  <div class="cards">
+    <div class="card">
+      <div class="k">DEMO A · 多模态安防</div>
+      <h3>视觉检测 → 语音提问 → 智能应答 → 工单落库</h3>
+      <p>四层串联的智能安防 Agent：看懂画面里的目标，听懂自然语言提问，从知识库检索答案，并把事件写成工单。</p>
+    </div>
+    <div class="card">
+      <div class="k">DEMO B · 文案人类化</div>
+      <h3>原文 / 开源内核改写 / 自研改写 三路对照</h3>
+      <p>把"AI 味"很重的文案改得自然通顺，并支持原文、开源方案、自研规则三路并排对比，质检可量化。</p>
+    </div>
+    <div class="card">
+      <div class="k">DEMO C · 漫剧流水线</div>
+      <h3>剧本 → 出图 → 配音 → 合成，可断点续跑</h3>
+      <p>一条命令把剧本变成短视频；中断后重跑会跳过已完成步骤，不重复烧钱出图，只重做失败步。</p>
+    </div>
+    <div class="card">
+      <div class="k">DEMO D · 统一门户 + 口径页</div>
+      <h3>统一入口 + 每个数字都可溯源</h3>
+      <p>把所有模块聚到一个门户里，并公开每个性能指标的"定义 / 公式 / 数据集 / 脚本 / 实测值"，接受追问。</p>
+    </div>
+  </div>
+
+  <h2>整体架构</h2>
+  <div class="arch">
+    <span class="box">图片 / 语音 / 文案 / 剧本</span>
+    <span class="arrow">→</span>
+    <span class="box">Demo A 安防</span>
+    <span class="box">Demo B 文案</span>
+    <span class="box">Demo C 漫剧</span>
+    <span class="arrow">→</span>
+    <span class="box">Demo D 门户(8200)</span>
+  </div>
+  <p>各模块通过统一底座与 HTTP 服务解耦，可独立演示，也可串成一条端到端链路。</p>
+
+  <h2>演示录屏与截图</h2>
+  <div class="media" style="border-style:solid;text-align:left">
+    <p style="margin:0 0 10px">下面是 <b>Demo A</b> 本次实测跑出来的目标检测结果（YOLO11n + CUDA 真实推理，非示意）：</p>
+    <img src="./assets/demo_a_detected.png" alt="Demo A 检测图" style="max-width:100%;border-radius:8px;border:1px solid var(--line)" />
+    <p style="margin:14px 0 0"><b>Demo C</b> 漫剧流水线端到端出图（ComfyUI 经 HTTP 调用，animagine-xl-4.0，832×1216，28 步，单张 14.5s，非示意）：</p>
+    <img src="./assets/demo_c_frame.png" alt="Demo C 出图" style="max-width:100%;max-height:520px;border-radius:8px;border:1px solid var(--line)" />
+    <p style="margin:10px 0 0;font-size:13px;color:#9aa3b2">
+      其余模块截图 / 录屏成片放入 <code>assets/</code> 后即可在此嵌入。<br/>
+      录屏分镜（14 镜，可直接照读）：<a href="./docs/recording_shotlist.xlsx">recording_shotlist.xlsx</a> ｜
+      全链路演示脚本 + 讲稿串词：<a href="./docs/demo_runbook_p5.md">demo_runbook_p5.md</a>
+    </p>
+  </div>
+
+  <h2>口径与归属（如实说明）</h2>
+  <div class="note">
+    <b>本仓库是「独立复现版」，不声称等于简历中的生产事实。</b><br/>
+    · <b>humanize-chinese</b> 为第三方开源（MIT），仅作检测/改写内核调用，<b>非自研</b>。<br/>
+    · <b>aigc-comic</b> 为既有自研项目，本 Demo 仅做 HTTP 接入与复现；其「状态机 + 断点续跑」是<b>既有能力，不声称自研</b>。<br/>
+    · 未接生产 LLM 的环节（Demo B 自研改写臂、Demo C LLM 审核通道）如实标注为 <b>n/a</b>，不粉饰。<br/>
+    · 完整边界与来源声明见仓库 <a href="./README.md">README</a> 与门户「来源声明页」。
+  </div>
+
+  <h2>本地运行（面向技术评委）</h2>
+  <pre># 最小演示路径（详见 README）
+cd interview-demo
+.venv\Scripts\python.exe scripts\demo_a_e2e.py --no-asr   # Demo A
+.venv\Scripts\python.exe -m demo_b_copywriting.app        # Demo B :8100
+.venv\Scripts\python.exe -m portal.app                    # Demo D :8200
+# Demo C 须用默认解释器在普通终端跑 aigc-comic，见 demo_runbook_p5.md</pre>
+
+  <footer>
+    厦门理工学院 · 电子信息工程 · AIGC 工具链方向求职作品集 ｜
+    本页为 GitHub Pages 静态展示，配套代码见仓库根 README。
+  </footer>
+
+</div>
+</body>
+</html>

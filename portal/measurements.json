@@ -58,9 +58,9 @@
       "measured_at": "2026-10-02T16:06:17+08:00"
     },
     "a_vision_latency": {
-      "measured": "7.71 ms（10 次取中位，min 6.89 / max 9.7 ms）",
+      "measured": "13.99 ms（10 次取中位，min 6.89 / max 21.42 ms）",
       "gap_note": "实测 provider=['CUDAExecutionProvider', 'CPUExecutionProvider']，是否降级=False；输入 810x1080，检出 5 个目标。该数字**含 letterbox 预处理 + NMS + 坐标反算**，不含模型首次加载（预热 1 次后计时）。⚠️ 必须记录实际生效的 provider（Session.get_providers()）—— get_available_providers() 在 ORT 缺依赖时仍会列出 CUDAExecutionProvider 而实际已静默降级 CPU。",
-      "measured_at": "2026-10-02T21:43:16+08:00"
+      "measured_at": "2026-10-02T23:17:31+08:00"
     },
     "a_asr_latency": {
       "measured": "1366.96 ms（device=cpu，compute_type=int8）",

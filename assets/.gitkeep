@@ -1,0 +1,3 @@
+# 录屏成片 / 模块截图放此目录。
+# 建议文件：demo_a.png、demo_b.png、demo_c.mp4、demo_d.png
+# 放入后可在 index.html 的「演示录屏与截图」区用 <img>/<video> 嵌入。

@@ -1,0 +1,18 @@
+# 文本文件：入库统一规范化为 LF，检出时用平台原生换行（Windows 为 CRLF）。
+# 与仓库当前实际状态一致，因此不会造成既有文件的换行符漂移或大规模 diff。
+* text=auto
+
+# 二进制文件：禁止任何换行符转换与 diff 尝试。
+# 这些文件若被误当文本处理会直接损坏（png 打不开、xlsx 报损坏、权重无法加载）。
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.xlsx binary
+*.xls binary
+*.whl binary
+*.onnx binary
+*.bin binary
+*.safetensors binary
+*.pyd binary
+*.dll binary

@@ -1,0 +1,37 @@
+MIT License
+
+Copyright (c) 2026 <你的姓名>
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+---
+
+## 适用范围与边界
+
+本许可覆盖**本仓库自研部分**（`common/`、`demo_a_security/`、`demo_b_copywriting/`、
+`demo_c_manju/`、`portal/`、`scripts/` 等，详见 `README.md`「组件来源声明」表）。
+
+**不覆盖**以下第三方组件，它们各自遵循上游许可：
+
+| 组件 | 位置 | 许可 |
+|---|---|---|
+| humanize-chinese | `third_party/humanize-chinese/` | MIT（上游以 README 徽章声明，未附独立 LICENSE 文件；见该目录下 `LICENSE.NOTICE.md`） |
+| ComfyUI | 仓库外 `D:\ComfyUI`，仅 HTTP 调用 | GPL-3.0。**未链接源码、未修改、未再分发**，故不造成本仓库的 GPL 传染 |
+
+> 本仓库为**技术方案的独立复现 / 技术验证版**，非生产系统。详见 `README.md` 顶部口径声明。

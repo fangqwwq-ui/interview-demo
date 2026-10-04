@@ -87,3 +87,7 @@ https://<用户名>.github.io/interview-demo/
 - [ ] 仓库首页顶部能看到「口径声明」三段
 - [ ] 简历里注明「技术验证版」，与仓库口径一致
 - [ ] 随机抽一个数字（如 13.99 ms）能在 `portal/measurements.json` 里找到出处
+- [ ] `README.md` 与 `docs/profile_readme.md` 里的 `<用户名>` **已全部替换**
+      （共 3 处：README 展示页网址 1 处、profile_readme 项目链接 2 处）——
+      未替换的话，简历上的链接和主页链接都会 404
+- [ ] 确认没把 `index.html` 当展示页发给 HR（GitHub 不渲染仓库内 HTML，会显示为源码）

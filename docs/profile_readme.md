@@ -9,7 +9,7 @@
 
 ## 代表项目
 
-### [interview-demo](https://github.com/<用户名>/interview-demo) —— 三套可复现的 AIGC 工具链技术验证
+### [interview-demo](https://github.com/fangqwwq-ui/interview-demo) —— 三套可复现的 AIGC 工具链技术验证
 
 三个独立 Demo + 一个指标门户。**每个性能数字都能指出：指标定义、计算公式、数据集、计算脚本。**
 
@@ -54,4 +54,4 @@ Python · FastAPI · ONNX Runtime(CUDA) · CTranslate2 · FAISS · SQLite · Com
 简历中涉及的运营与商业事实（客户数量、采购合同、上线 SLA）不在本仓库的能力范围内，
 仓库里对这类条目一律标注「需原始材料佐证」。
 
-> 详细的口径声明、组件来源表、复现命令见 [interview-demo](https://github.com/<用户名>/interview-demo)。
+> 详细的口径声明、组件来源表、复现命令见 [interview-demo](https://github.com/fangqwwq-ui/interview-demo)。

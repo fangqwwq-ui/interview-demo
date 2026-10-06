@@ -1,6 +1,6 @@
 # 简历项目 Demo —— 可复现技术验证集
 
-> **非技术评审（HR）请看展示页：`https://<用户名>.github.io/interview-demo/`** ｜ 技术评委看下方全文。
+> **非技术评审（HR）请看展示页：`https://fangqwwq-ui.github.io/interview-demo/`** ｜ 技术评委看下方全文。
 > ⚠️ 不要直接点仓库里的 `index.html`：GitHub **不渲染**仓库内的 HTML 文件，点开是源码。
 > 必须走上面这个 Pages 网址（推送并开启 Pages 后生效）。
 > 本项目把简历中的技术主张转化为**可运行、可复现、可当场演示**的实现。
